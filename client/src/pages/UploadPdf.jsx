@@ -46,13 +46,17 @@ export default function UploadPdf() {
         f.type === 'application/octet-stream' ||
         f.name?.toLowerCase().endsWith('.pdf'));
 
-    if (isPdf) {
-      setFile(f);
-      setResult(null);
-      setError('');
-    } else {
+    if (!isPdf) {
       setError('Please select a valid PDF file');
+      return;
     }
+    if (f.size > 4.5 * 1024 * 1024) {
+      setError('PDF must be under 4.5MB. Please compress the file and try again.');
+      return;
+    }
+    setFile(f);
+    setResult(null);
+    setError('');
   };
 
   const onDrop = (e) => {
@@ -135,7 +139,7 @@ export default function UploadPdf() {
                   </label>
                 </>
               )}
-              <p className="text-xs text-slate-400 mt-2">PDF only, max 20MB</p>
+              <p className="text-xs text-slate-400 mt-2">PDF only, max 4.5MB</p>
             </div>
           </Card>
 
