@@ -119,7 +119,14 @@ export default function TrackOrder() {
         })
         .catch((err) => {
           setResults([]);
-          setError(err.response?.data?.error || 'Failed to load your orders');
+          const msg =
+            err.response?.data?.error ||
+            (err.response?.status === 401
+              ? 'Please sign in again to view your orders'
+              : err.message?.includes('Network')
+                ? 'Cannot reach the API. Check Vercel env vars and redeploy.'
+                : 'Failed to load your orders');
+          setError(msg);
         })
         .finally(() => setLoading(false));
       return;

@@ -1,3 +1,6 @@
 import app from '../server/index.js';
 
-export default app;
+// Vercel serverless entry — Express handles /api/* and /health/*
+export default function handler(req, res) {
+  return app(req, res);
+}

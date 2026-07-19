@@ -1,7 +1,16 @@
 import axios from 'axios';
 
+function getApiBaseUrl() {
+  const configured = import.meta.env.VITE_API_URL;
+  // On Vercel/production, never call localhost — use same-origin /api
+  if (import.meta.env.PROD && (!configured || String(configured).includes('localhost'))) {
+    return '/api';
+  }
+  return configured || '/api';
+}
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: getApiBaseUrl(),
 });
 
 let tokenGetter = null;
