@@ -8,11 +8,12 @@ export default function Skeleton({ className = '' }) {
 
 export function BookCardSkeleton() {
   return (
-    <div className="glass-card p-4 space-y-3">
-      <Skeleton className="h-40 w-full" />
-      <Skeleton className="h-4 w-3/4" />
+    <div className="glass-card p-3 space-y-2">
+      <Skeleton className="aspect-square w-full rounded-lg" />
+      <Skeleton className="h-3 w-full" />
+      <Skeleton className="h-2.5 w-2/3" />
       <Skeleton className="h-3 w-1/2" />
-      <Skeleton className="h-8 w-full" />
+      <Skeleton className="h-9 w-full rounded-xl" />
     </div>
   );
 }
