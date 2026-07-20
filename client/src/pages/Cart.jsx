@@ -16,7 +16,7 @@ export default function Cart() {
   const { items, ready, updateQuantity, removeItem, clearCart } = useCart();
   const { isSignedIn } = useAuth();
   const { minOrder } = usePricing();
-  const { grandTotal } = useOrderTotals('split');
+  const { grandTotal } = useOrderTotals('full');
   const canCheckout = grandTotal >= minOrder;
 
   if (!ready) {

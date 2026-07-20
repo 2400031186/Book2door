@@ -396,7 +396,7 @@ export async function updateAdminSettings(req, res) {
       'pdf_bw_per_page', 'pdf_bw_single_per_page', 'pdf_bw_double_per_page',
       'pdf_color_per_page', 'single_side_multiplier',
       'double_side_multiplier', 'spiral_binding', 'delivery_flat',
-      'min_order', 'split_advance_percent',
+      'min_order', 'split_advance_percent', 'split_payment_fee',
     ];
 
     for (const field of numericFields) {

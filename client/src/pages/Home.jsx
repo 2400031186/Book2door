@@ -35,7 +35,7 @@ const faqs = [
   { q: 'How long until my order is ready?', a: 'Orders are usually ready for campus pickup within 3–5 business days after payment is confirmed.' },
   { q: 'Where do I pick up my order?', a: 'Choose your pickup location at checkout: Aravali hostel, Vindhya hostel, Kailash residency, or S-block.' },
   { q: 'How do I track my order?', a: 'Sign in and go to Track Order to see all your orders. You can also search using your order ID or the phone number used at checkout.' },
-  { q: 'What is split payment?', a: 'Pay 50% advance online via UPI and the remaining 50% in cash when you pick up your order.' },
+  { q: 'What is split payment?', a: 'Pay 50% advance online via UPI and the rest in cash at pickup. Split payment includes a ₹15 service fee — choose Full Payment at checkout to pay everything online with no extra fee.' },
 ];
 
 function FAQItem({ q, a }) {

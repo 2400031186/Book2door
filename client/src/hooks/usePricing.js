@@ -9,15 +9,22 @@ export function usePricing() {
     settingsApi
       .getPricing()
       .then(({ data }) => setPricing(data.pricing))
-      .catch(() => setPricing({ delivery_flat: 0, pdf_bw_per_page: 1, split_advance_percent: 50, min_order: 100 }))
+      .catch(() => setPricing({
+        delivery_flat: 0,
+        pdf_bw_per_page: 1,
+        split_advance_percent: 50,
+        split_payment_fee: 15,
+        min_order: 100,
+      }))
       .finally(() => setLoading(false));
   }, []);
 
   const deliveryCharge = pricing?.delivery_flat ?? 0;
   const splitPercent = pricing?.split_advance_percent ?? 50;
+  const splitPaymentFee = Number(pricing?.split_payment_fee ?? 15);
   const minOrder = pricing?.min_order ?? 100;
 
-  return { pricing, loading, deliveryCharge, splitPercent, minOrder };
+  return { pricing, loading, deliveryCharge, splitPercent, splitPaymentFee, minOrder };
 }
 
 export default usePricing;

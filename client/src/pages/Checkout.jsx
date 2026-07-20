@@ -19,7 +19,7 @@ import { SUPPORT_PHONE_DISPLAY, SUPPORT_PHONE_TEL } from '../constants/support';
 export default function Checkout() {
   const { items, ready, clearCart } = useCart();
   const { isSignedIn } = useAuth();
-  const { splitPercent, minOrder } = usePricing();
+  const { splitPercent, minOrder, splitPaymentFee } = usePricing();
   const navigate = useNavigate();
   const saved = loadSavedCheckout();
   const { register, handleSubmit, setValue, formState: { errors } } = useForm({
@@ -45,7 +45,7 @@ export default function Checkout() {
   const [savedPickup, setSavedPickup] = useState(saved?.pickup_location || '');
   const [changingPickup, setChangingPickup] = useState(false);
 
-  const { grandTotal, advanceAmount, codAmount } = useOrderTotals(paymentType);
+  const { baseTotal, grandTotal, advanceAmount, codAmount } = useOrderTotals(paymentType);
 
   useEffect(() => {
     settingsApi.getPricing().then(({ data }) => {
@@ -282,7 +282,8 @@ export default function Checkout() {
                     className={`p-4 rounded-xl border-2 text-left transition min-h-11 ${paymentType === 'full' ? 'border-[#0A0A0A] dark:border-white bg-neutral-50 dark:bg-neutral-900' : 'border-neutral-200 dark:border-neutral-700'}`}
                   >
                     <div className="font-semibold">Full Payment</div>
-                    <div className="text-sm text-neutral-500">Pay ₹{grandTotal.toFixed(2)} online now</div>
+                    <div className="text-sm text-neutral-500">Pay ₹{baseTotal.toFixed(2)} online now</div>
+                    <div className="text-xs text-green-600 dark:text-green-400 mt-1">No split payment fee</div>
                   </button>
                   <button
                     type="button"
@@ -291,10 +292,16 @@ export default function Checkout() {
                   >
                     <div className="font-semibold">Split Payment</div>
                     <div className="text-sm text-neutral-500">
-                      ₹{advanceAmount.toFixed(2)} now + ₹{codAmount.toFixed(2)} COD
+                      ₹{advanceAmount.toFixed(2)} now + ₹{codAmount.toFixed(2)} at pickup
+                    </div>
+                    <div className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                      +₹{splitPaymentFee} split fee included
                     </div>
                   </button>
                 </div>
+                <p className="text-xs text-neutral-500 mt-3">
+                  Split payment adds ₹{splitPaymentFee} to your order. Choose <span className="font-medium">Full Payment</span> if you want to pay the full amount online with no extra fee.
+                </p>
               </Card>
             </div>
 

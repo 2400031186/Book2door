@@ -44,6 +44,7 @@ function getDefaultSettings() {
     delivery_flat: 0,
     min_order: 100,
     split_advance_percent: 50,
+    split_payment_fee: 15,
     upi_id: 'book2door@ybl',
     upi_qr_url: '/upi-qr.png',
     pickup_locations: ['Aravali hostel', 'Vindhya hostel', 'Kailash residency', 'S-block'],
@@ -90,12 +91,16 @@ export function calculateBookLineTotal(unitPrice, quantity) {
   return Math.round(unitPrice * quantity * 100) / 100;
 }
 
-export function calculateOrderTotals(items, settings) {
+export function calculateOrderTotals(items, settings, paymentType = 'full') {
   const subtotal = items.reduce((sum, item) => sum + item.line_total, 0);
   const deliveryCharge = subtotal > 0 ? settings.delivery_flat : 0;
-  const grandTotal = Math.round((subtotal + deliveryCharge) * 100) / 100;
+  const splitFee =
+    paymentType === 'split' && subtotal > 0
+      ? Number(settings.split_payment_fee ?? 15)
+      : 0;
+  const grandTotal = Math.round((subtotal + deliveryCharge + splitFee) * 100) / 100;
 
-  return { subtotal, deliveryCharge, grandTotal };
+  return { subtotal, deliveryCharge, splitFee, grandTotal };
 }
 
 export function calculatePaymentSplit(grandTotal, paymentType, settings) {

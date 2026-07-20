@@ -105,7 +105,12 @@ export async function createOrder(req, res) {
       }
     }
 
-    const { subtotal, deliveryCharge, grandTotal } = calculateOrderTotals(orderItems, settings);
+    const payType = payment_type === 'split' ? 'split' : 'full';
+    const { subtotal, deliveryCharge, grandTotal } = calculateOrderTotals(
+      orderItems,
+      settings,
+      payType
+    );
 
     if (grandTotal < settings.min_order) {
       return res.status(400).json({
@@ -113,7 +118,6 @@ export async function createOrder(req, res) {
       });
     }
 
-    const payType = payment_type === 'split' ? 'split' : 'full';
     const { advanceAmount, codAmount } = calculatePaymentSplit(grandTotal, payType, settings);
     const orderNumber = generateOrderNumber();
 

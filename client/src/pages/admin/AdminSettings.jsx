@@ -56,6 +56,7 @@ export default function AdminSettings() {
     { key: 'spiral_binding', label: 'Binding Charge (₹)' },
     { key: 'delivery_flat', label: 'Delivery Charge (₹)' },
     { key: 'min_order', label: 'Minimum Order (₹)' },
+    { key: 'split_payment_fee', label: 'Split Payment Fee (₹)' },
     { key: 'split_advance_percent', label: 'Split Advance (%)' },
     { key: 'upi_id', label: 'UPI ID' },
   ];
