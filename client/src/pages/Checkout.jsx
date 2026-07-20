@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { Helmet } from 'react-helmet-async';
-import { MessageCircle, Phone, Send, QrCode, Upload, CheckCircle, Copy } from 'lucide-react';
+import { Phone, QrCode, Upload, CheckCircle, Copy } from 'lucide-react';
 import { ordersApi, paymentsApi, settingsApi } from '../services/api';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -13,6 +13,7 @@ import { Input, Textarea, Select } from '../components/Input';
 import OrderSummary, { useOrderTotals } from '../components/OrderSummary';
 import PageTransition from '../components/PageTransition';
 import { saveGuestOrder } from '../utils/guestOrders';
+import { SUPPORT_PHONE_DISPLAY, SUPPORT_PHONE_TEL } from '../constants/support';
 
 const CHECKOUT_STORAGE_KEY = 'book2door-checkout';
 
@@ -236,10 +237,6 @@ export default function Checkout() {
     }
   };
 
-  const whatsapp = import.meta.env.VITE_WHATSAPP_NUMBER || '919876543210';
-  const supportPhone = import.meta.env.VITE_SUPPORT_PHONE || '919876543210';
-  const telegram = import.meta.env.VITE_TELEGRAM_USERNAME || 'book2door';
-
   return (
     <PageTransition>
       <Helmet><title>Checkout — Book2Door</title></Helmet>
@@ -414,18 +411,12 @@ export default function Checkout() {
               </Card>
 
               <Card>
-                <h2 className="font-semibold mb-3">Need help paying?</h2>
-                <div className="flex flex-wrap gap-3">
-                  <a href={`https://wa.me/${whatsapp}?text=Order%20${orderData?.order?.order_number}%20-%20Need%20help%20with%20payment`} target="_blank" rel="noreferrer">
-                    <Button variant="secondary" size="sm"><MessageCircle size={16} /> WhatsApp</Button>
-                  </a>
-                  <a href={`https://t.me/${telegram}`} target="_blank" rel="noreferrer">
-                    <Button variant="secondary" size="sm"><Send size={16} /> Telegram</Button>
-                  </a>
-                  <a href={`tel:+${supportPhone}`}>
-                    <Button variant="secondary" size="sm"><Phone size={16} /> Call</Button>
-                  </a>
-                </div>
+                <h2 className="font-semibold mb-3">Need help?</h2>
+                <a href={`tel:${SUPPORT_PHONE_TEL}`}>
+                  <Button variant="secondary" size="sm">
+                    <Phone size={16} /> Call {SUPPORT_PHONE_DISPLAY}
+                  </Button>
+                </a>
               </Card>
             </div>
 

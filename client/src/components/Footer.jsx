@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { BookOpen, Mail, Phone } from 'lucide-react';
+import { BookOpen, Phone } from 'lucide-react';
+import { SUPPORT_PHONE_DISPLAY, SUPPORT_PHONE_TEL } from '../constants/support';
 
 export default function Footer() {
   return (
@@ -32,8 +33,11 @@ export default function Footer() {
           <div>
             <h4 className="font-semibold mb-3 text-sm uppercase tracking-wide text-neutral-500">Support</h4>
             <ul className="space-y-2.5 text-sm text-neutral-600 dark:text-neutral-400">
-              <li className="flex items-center gap-2"><Mail size={14} /> support@book2door.com</li>
-              <li className="flex items-center gap-2"><Phone size={14} /> +91 98765 43210</li>
+              <li>
+                <a href={`tel:${SUPPORT_PHONE_TEL}`} className="flex items-center gap-2 hover:text-[#0A0A0A] dark:hover:text-white transition">
+                  <Phone size={14} /> {SUPPORT_PHONE_DISPLAY}
+                </a>
+              </li>
             </ul>
           </div>
 
