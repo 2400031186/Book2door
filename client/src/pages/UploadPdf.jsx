@@ -105,7 +105,8 @@ export default function UploadPdf() {
         <Card className="mb-6 p-4 bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800">
           <p className="text-sm font-medium mb-1">Printing price</p>
           <p className="text-sm text-neutral-600 dark:text-neutral-300">
-            Black &amp; White: <span className="font-bold">₹{pricing?.pdf_bw_per_page ?? 1} per page</span>
+            Single-sided: <span className="font-bold">₹{pricing?.pdf_bw_single_per_page ?? pricing?.pdf_bw_per_page ?? 1} per page</span>
+            {' · '}Double-sided: <span className="font-bold">₹{pricing?.pdf_bw_double_per_page ?? 0.5} per page</span>
             {' · '}Binding: <span className="font-bold">₹75</span> (included on every order)
           </p>
         </Card>
@@ -188,7 +189,7 @@ export default function UploadPdf() {
               </div>
               <div className="grid grid-cols-2 gap-4 text-sm mb-4">
                 <div><span className="text-neutral-500">Pages:</span> {result.page_count}</div>
-                <div><span className="text-neutral-500">Rate:</span> ₹{pricing?.pdf_bw_per_page ?? 1}/page</div>
+                <div><span className="text-neutral-500">Rate:</span> ₹{sideMode === 'double' ? (pricing?.pdf_bw_double_per_page ?? 0.5) : (pricing?.pdf_bw_single_per_page ?? pricing?.pdf_bw_per_page ?? 1)}/page</div>
                 <div><span className="text-neutral-500">Sides:</span> {sideMode === 'double' ? 'Double' : 'Single'}</div>
                 <div><span className="text-neutral-500">Copies:</span> {copies}</div>
                 <div><span className="text-neutral-500">Binding:</span> +₹75</div>

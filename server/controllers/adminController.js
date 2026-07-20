@@ -8,6 +8,7 @@ import {
   getStorageSummary,
 } from '../utils/storageManager.js';
 import { DEFAULT_BOOK_COVER, withDefaultCovers } from '../utils/books.js';
+import { getPdfPageCountFromBuffer } from '../utils/pdf.js';
 
 export async function getDashboard(req, res) {
   try {
@@ -211,11 +212,13 @@ export async function createBook(req, res) {
 
     let pdf_path = null;
     let pdf_file_name = null;
+    let page_count = null;
 
     if (req.file) {
       pdf_file_name = req.file.originalname;
       pdf_path = `books/${Date.now()}-${req.file.originalname}`;
       const buffer = await getUploadBuffer(req.file);
+      page_count = await getPdfPageCountFromBuffer(buffer);
       await assertStorageQuota(buffer.length);
       const { error: uploadError } = await supabase.storage
         .from('pdf_uploads')
@@ -231,6 +234,7 @@ export async function createBook(req, res) {
         year: String(year),
         semester: String(semester),
         price: parseFloat(price),
+        page_count,
         pdf_path,
         pdf_file_name,
         cover_image_url: DEFAULT_BOOK_COVER,
@@ -268,6 +272,7 @@ export async function updateBook(req, res) {
     if (req.file) {
       const pdf_path = `books/${Date.now()}-${req.file.originalname}`;
       const buffer = await getUploadBuffer(req.file);
+      updates.page_count = await getPdfPageCountFromBuffer(buffer);
       await assertStorageQuota(buffer.length);
       await supabase.storage.from('pdf_uploads').upload(pdf_path, buffer, { contentType: 'application/pdf' });
       updates.pdf_path = pdf_path;
@@ -388,7 +393,8 @@ export async function updateAdminSettings(req, res) {
     const current = await getPricingSettings(true);
 
     const numericFields = [
-      'pdf_bw_per_page', 'pdf_color_per_page', 'single_side_multiplier',
+      'pdf_bw_per_page', 'pdf_bw_single_per_page', 'pdf_bw_double_per_page',
+      'pdf_color_per_page', 'single_side_multiplier',
       'double_side_multiplier', 'spiral_binding', 'delivery_flat',
       'min_order', 'split_advance_percent',
     ];

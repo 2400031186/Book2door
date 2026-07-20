@@ -3,6 +3,7 @@ import { Helmet } from 'react-helmet-async';
 import { SignInButton, SignUpButton } from '@clerk/clerk-react';
 import { Trash2, Plus, Minus, ShoppingBag, FileText } from 'lucide-react';
 import { useCart, getLineTotal } from '../context/CartContext';
+import { formatSideLabel } from '../utils/bookPricing';
 import { useAuth } from '../context/AuthContext';
 import { getBookCoverUrl } from '../constants/books';
 import usePricing from '../hooks/usePricing';
@@ -76,9 +77,12 @@ export default function Cart() {
                   </h3>
                   <p className="text-xs text-neutral-500">
                     {item.type === 'book'
-                      ? `${item.course_code || 'Book'} · Year ${item.year || '—'} · Sem ${item.semester || '—'}`
+                      ? `${item.course_code || 'Book'} · Year ${item.year || '—'} · Sem ${item.semester || '—'} · ${formatSideLabel(item.sideMode)}`
                       : 'Custom PDF Print'}
                     {item.type === 'pdf' && item.page_count ? ` · ${item.page_count} pages` : ''}
+                    {item.type === 'pdf' && item.print_options?.sideMode
+                      ? ` · ${formatSideLabel(item.print_options.sideMode)}`
+                      : ''}
                   </p>
                   <p className="font-bold mt-1">
                     ₹{getLineTotal(item).toFixed(2)}

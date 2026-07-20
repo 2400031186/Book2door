@@ -122,6 +122,9 @@ function OrderItemRow({ item, onDownloadPdf, onDownloadBookPdf, downloadingId })
               <p className="text-xs text-slate-500 mt-1">
                 <span className="font-mono font-semibold text-brand-600">{book.course_code}</span>
                 {' · Year '}{book.year} · Sem {book.semester}
+                {item.metadata?.sideMode
+                  ? ` · ${item.metadata.sideMode === 'double' ? 'Double-sided' : 'Single-sided'}`
+                  : ''}
               </p>
             )}
             {!isBook && pdf && (

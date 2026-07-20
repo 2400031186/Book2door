@@ -97,7 +97,7 @@ export default function AdminBooks() {
       return;
     }
     if (!form.price) {
-      setError('Price is required');
+      setError('Amount is required');
       return;
     }
     if (!editing && !pdfFile) {
@@ -154,7 +154,9 @@ export default function AdminBooks() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold">Books</h1>
-          <p className="text-sm text-slate-500 mt-1">Manage catalog books and upload PDF files for printing.</p>
+          <p className="text-sm text-slate-500 mt-1">
+            Upload a book PDF and set the single-side amount. Double-sided price is half at checkout.
+          </p>
         </div>
         <Button onClick={openCreate}>
           <BookOpen size={16} /> Add Book
@@ -177,7 +179,7 @@ export default function AdminBooks() {
                   <th className="text-left py-3 px-4 font-semibold text-slate-600 dark:text-slate-300">Course</th>
                   <th className="text-left py-3 px-4 font-semibold text-slate-600 dark:text-slate-300">Title</th>
                   <th className="text-left py-3 px-4 font-semibold text-slate-600 dark:text-slate-300">Year / Sem</th>
-                  <th className="text-left py-3 px-4 font-semibold text-slate-600 dark:text-slate-300">Price</th>
+                  <th className="text-left py-3 px-4 font-semibold text-slate-600 dark:text-slate-300">Amount</th>
                   <th className="text-left py-3 px-4 font-semibold text-slate-600 dark:text-slate-300">PDF</th>
                   <th className="text-left py-3 px-4 font-semibold text-slate-600 dark:text-slate-300">Status</th>
                   <th className="text-right py-3 px-4 font-semibold text-slate-600 dark:text-slate-300">Actions</th>
@@ -189,7 +191,7 @@ export default function AdminBooks() {
                     <td className="py-3 px-4 font-mono font-semibold text-brand-600">{b.course_code}</td>
                     <td className="py-3 px-4 max-w-[200px] truncate">{b.title}</td>
                     <td className="py-3 px-4 text-slate-600 dark:text-slate-400">Y{b.year} · S{b.semester}</td>
-                    <td className="py-3 px-4 font-medium">₹{b.price}</td>
+                    <td className="py-3 px-4 font-medium">₹{b.price} <span className="text-xs text-slate-400">(single)</span></td>
                     <td className="py-3 px-4">
                       {b.pdf_path ? (
                         <button
@@ -233,7 +235,15 @@ export default function AdminBooks() {
               value={form.course_code}
               onChange={(e) => setForm({ ...form, course_code: e.target.value.toUpperCase() })}
             />
-            <Input label="Price (₹) *" type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
+            <Input
+              label="Amount (₹) — single-side *"
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="e.g. 150"
+              value={form.price}
+              onChange={(e) => setForm({ ...form, price: e.target.value })}
+            />
           </div>
           <Input label="Title *" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
           <div className="grid grid-cols-2 gap-4">

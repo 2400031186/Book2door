@@ -120,6 +120,7 @@ export default function Checkout() {
           type: item.type,
           id: item.id,
           quantity: item.quantity || 1,
+          ...(item.type === 'book' ? { sideMode: item.sideMode || 'single' } : {}),
         })),
       };
 

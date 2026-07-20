@@ -34,9 +34,11 @@ export function invalidateSettingsCache() {
 function getDefaultSettings() {
   return {
     pdf_bw_per_page: 1,
+    pdf_bw_single_per_page: 1,
+    pdf_bw_double_per_page: 0.5,
     pdf_color_per_page: 3.0,
     single_side_multiplier: 1.0,
-    double_side_multiplier: 0.7,
+    double_side_multiplier: 0.5,
     // Binding is fixed permanently at ₹75
     spiral_binding: 75,
     delivery_flat: 0,
@@ -48,6 +50,13 @@ function getDefaultSettings() {
   };
 }
 
+export function getBwRatePerPage(sideMode, settings) {
+  if (sideMode === 'double') {
+    return settings.pdf_bw_double_per_page ?? 0.5;
+  }
+  return settings.pdf_bw_single_per_page ?? settings.pdf_bw_per_page ?? 1;
+}
+
 export function calculatePdfPrice(pageCount, options, settings) {
   const {
     colorMode = 'bw',
@@ -56,18 +65,29 @@ export function calculatePdfPrice(pageCount, options, settings) {
     spiralBinding = false,
   } = options;
 
-  const rate = colorMode === 'color' ? settings.pdf_color_per_page : settings.pdf_bw_per_page;
-  const sideMultiplier =
-    sideMode === 'double' ? settings.double_side_multiplier : settings.single_side_multiplier;
-  // Permanent binding charge (remove dependency on DB setting).
+  const rate = colorMode === 'color'
+    ? settings.pdf_color_per_page
+    : getBwRatePerPage(sideMode, settings);
   const bindingCharge = spiralBinding ? 75 : 0;
 
-  const printCost = pageCount * rate * sideMultiplier * copies;
+  const printCost = pageCount * rate * copies;
   return Math.round((printCost + bindingCharge) * 100) / 100;
 }
 
-export function calculateBookLineTotal(price, quantity) {
-  return Math.round(price * quantity * 100) / 100;
+/** Admin book amount is the single-side price; double-side is half. */
+export function calculateBookUnitPrice(singleSideAmount, sideMode, settings) {
+  const base = parseFloat(singleSideAmount) || 0;
+  if (sideMode === 'double') {
+    const singleRate = settings.pdf_bw_single_per_page ?? settings.pdf_bw_per_page ?? 1;
+    const doubleRate = settings.pdf_bw_double_per_page ?? 0.5;
+    const ratio = singleRate > 0 ? doubleRate / singleRate : 0.5;
+    return Math.round(base * ratio * 100) / 100;
+  }
+  return Math.round(base * 100) / 100;
+}
+
+export function calculateBookLineTotal(unitPrice, quantity) {
+  return Math.round(unitPrice * quantity * 100) / 100;
 }
 
 export function calculateOrderTotals(items, settings) {

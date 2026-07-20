@@ -31,7 +31,7 @@ const testimonials = [
 
 const faqs = [
   { q: 'Do I need an account to order?', a: 'Yes. Sign in or create an account to checkout and place orders. You can browse books and upload PDFs before signing in.' },
-  { q: 'How much does PDF printing cost?', a: 'Black & White printing is ₹1 per page. Binding is ₹75 and included on every PDF order. Pickup is free.' },
+  { q: 'How much does PDF printing cost?', a: 'Single-sided B&W is ₹1 per page. Double-sided B&W is ₹0.5 per page. Binding is ₹75 and included on every PDF order. Pickup is free.' },
   { q: 'How long until my order is ready?', a: 'Orders are usually ready for campus pickup within 3–5 business days after payment is confirmed.' },
   { q: 'Where do I pick up my order?', a: 'Choose your pickup location at checkout: Aravali hostel, Vindhya hostel, Kailash residency, or S-block.' },
   { q: 'How do I track my order?', a: 'Sign in and go to Track Order to see all your orders. You can also search using your order ID or the phone number used at checkout.' },

@@ -5,11 +5,15 @@ const CartContext = createContext();
 const STORAGE_KEY = 'book2door-cart';
 
 function normalizeItem(item) {
+  const sideMode = item.sideMode || 'single';
+  const cartKey = item.cartKey
+    || (item.type === 'book' ? `book-${item.id}-${sideMode}` : `${item.type}-${item.id}`);
   return {
     ...item,
+    sideMode,
     price: Number(item.price) || 0,
     quantity: Number(item.quantity) || 1,
-    cartKey: item.cartKey || `${item.type}-${item.id}`,
+    cartKey,
   };
 }
 
@@ -19,10 +23,10 @@ function cartReducer(state, action) {
       return action.payload.map(normalizeItem);
     case 'ADD_BOOK': {
       const payload = normalizeItem(action.payload);
-      const existing = state.find((i) => i.type === 'book' && i.id === payload.id);
+      const existing = state.find((i) => i.cartKey === payload.cartKey);
       if (existing) {
         return state.map((i) =>
-          i.type === 'book' && i.id === payload.id
+          i.cartKey === payload.cartKey
             ? { ...i, quantity: i.quantity + (payload.quantity || 1) }
             : i
         );
@@ -81,19 +85,23 @@ export function CartProvider({ children }) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
   }, [items]);
 
-  const addBook = (book, quantity = 1) => {
+  const addBook = (book, quantity = 1, sideMode = 'single', unitPrice) => {
+    const price = unitPrice ?? parseFloat(book.price);
     dispatch({
       type: 'ADD_BOOK',
       payload: {
         id: book.id,
         course_code: book.course_code,
         title: book.title,
-        price: parseFloat(book.price),
+        price,
+        single_side_amount: parseFloat(book.price),
+        sideMode,
         cover_image_url: getBookCoverUrl(book.cover_image_url),
         year: book.year,
         semester: book.semester,
+        page_count: book.page_count,
         quantity,
-        cartKey: `book-${book.id}`,
+        cartKey: `book-${book.id}-${sideMode}`,
       },
     });
   };

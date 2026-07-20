@@ -3,11 +3,13 @@ import { useEffect, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 import { Search, ShoppingCart, BookOpen } from 'lucide-react';
-import { booksApi } from '../services/api';
+import { booksApi, settingsApi } from '../services/api';
 import { useCart } from '../context/CartContext';
 import { getBookCoverUrl } from '../constants/books';
+import { getBookCartUnitPrice } from '../utils/bookPricing';
 import Button from '../components/Button';
 import Card from '../components/Card';
+import Modal from '../components/Modal';
 import { Select } from '../components/Input';
 import { BookCardSkeleton } from '../components/Skeleton';
 import PageTransition from '../components/PageTransition';
@@ -21,11 +23,14 @@ export default function Books() {
   const [search, setSearch] = useState('');
   const [year, setYear] = useState('');
   const [semester, setSemester] = useState('');
+  const [pricing, setPricing] = useState(null);
   const { addBook, itemCount } = useCart();
   const [addedId, setAddedId] = useState(null);
+  const [sideModalBook, setSideModalBook] = useState(null);
 
   useEffect(() => {
     fetchBooks();
+    settingsApi.getPricing().then(({ data }) => setPricing(data.pricing)).catch(() => {});
   }, [year, semester]);
 
   const fetchBooks = async () => {
@@ -53,6 +58,18 @@ export default function Books() {
     );
   }, [books, search]);
 
+  const singleRate = pricing?.pdf_bw_single_per_page ?? pricing?.pdf_bw_per_page ?? 1;
+  const doubleRate = pricing?.pdf_bw_double_per_page ?? 0.5;
+
+  const handleAddWithSide = (sideMode) => {
+    if (!sideModalBook) return;
+    const unitPrice = getBookCartUnitPrice(sideModalBook.price, sideMode, pricing);
+    addBook(sideModalBook, 1, sideMode, unitPrice);
+    setAddedId(`${sideModalBook.id}-${sideMode}`);
+    setSideModalBook(null);
+    setTimeout(() => setAddedId(null), 2000);
+  };
+
   return (
     <PageTransition>
       <Helmet>
@@ -62,7 +79,7 @@ export default function Books() {
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-10">
         <h1 className="text-xl sm:text-3xl font-bold mb-1">Browse Books</h1>
         <p className="text-neutral-500 mb-4 sm:mb-6 text-xs sm:text-base">
-          Find workbooks by course code, year, and semester.
+          Find workbooks by course code, year, and semester. Choose single or double-sided when adding to cart.
         </p>
 
         <div className="glass-card p-3 sm:p-4 mb-4 sm:mb-6 space-y-3">
@@ -123,8 +140,10 @@ export default function Books() {
                   <h3 className="text-xs sm:text-sm font-semibold line-clamp-2 leading-snug mb-1">{book.title}</h3>
                   <p className="text-[10px] sm:text-xs text-neutral-500 mb-1">
                     Y{book.year} · Sem {book.semester}
+                    {book.page_count ? ` · ${book.page_count} pg` : ''}
                   </p>
-                  <p className="text-sm sm:text-base font-bold mb-1">₹{book.price}</p>
+                  <p className="text-sm sm:text-base font-bold mb-1">From ₹{getBookCartUnitPrice(book.price, 'double', pricing).toFixed(2)}</p>
+                  <p className="text-[10px] text-neutral-400 mb-1">Single-side: ₹{Number(book.price).toFixed(2)}</p>
                   <p className="text-[10px] sm:text-xs mb-2 mt-auto leading-tight">
                     <span className="text-neutral-500">Code </span>
                     <span className="font-mono font-bold text-neutral-600 dark:text-neutral-300">{book.course_code}</span>
@@ -132,14 +151,10 @@ export default function Books() {
                   <Button
                     size="sm"
                     className="w-full text-xs sm:text-sm"
-                    onClick={() => {
-                      addBook(book);
-                      setAddedId(book.id);
-                      setTimeout(() => setAddedId(null), 2000);
-                    }}
+                    onClick={() => setSideModalBook(book)}
                   >
                     <ShoppingCart size={14} />
-                    {addedId === book.id ? 'Added!' : 'Add'}
+                    {addedId?.startsWith(book.id) ? 'Added!' : 'Add'}
                   </Button>
                 </Card>
               </motion.div>
@@ -155,6 +170,37 @@ export default function Books() {
           </div>
         )}
       </div>
+
+      <Modal
+        isOpen={!!sideModalBook}
+        onClose={() => setSideModalBook(null)}
+        title={sideModalBook ? `Print options — ${sideModalBook.title}` : 'Print options'}
+        size="sm"
+      >
+        {sideModalBook && (
+          <div className="space-y-3">
+            <p className="text-sm text-neutral-500">
+              Choose how you want this book printed.
+            </p>
+            <button
+              type="button"
+              onClick={() => handleAddWithSide('single')}
+              className="w-full p-4 rounded-xl border-2 border-neutral-200 dark:border-neutral-700 hover:border-[#0A0A0A] dark:hover:border-white text-left transition"
+            >
+              <div className="font-semibold">Single-sided</div>
+              <div className="text-sm text-neutral-500">₹{singleRate}/page rate · ₹{getBookCartUnitPrice(sideModalBook.price, 'single', pricing).toFixed(2)} total</div>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleAddWithSide('double')}
+              className="w-full p-4 rounded-xl border-2 border-neutral-200 dark:border-neutral-700 hover:border-[#0A0A0A] dark:hover:border-white text-left transition"
+            >
+              <div className="font-semibold">Double-sided</div>
+              <div className="text-sm text-neutral-500">₹{doubleRate}/page rate · ₹{getBookCartUnitPrice(sideModalBook.price, 'double', pricing).toFixed(2)} total</div>
+            </button>
+          </div>
+        )}
+      </Modal>
     </PageTransition>
   );
 }

@@ -50,10 +50,9 @@ export default function AdminSettings() {
   if (loading) return <Skeleton className="h-96 w-full" />;
 
   const fields = [
-    { key: 'pdf_bw_per_page', label: 'B&W Price per Page (₹)' },
+    { key: 'pdf_bw_single_per_page', label: 'Single-Side B&W (₹/page)' },
+    { key: 'pdf_bw_double_per_page', label: 'Double-Side B&W (₹/page)' },
     { key: 'pdf_color_per_page', label: 'Color Price per Page (₹)' },
-    { key: 'single_side_multiplier', label: 'Single Side Multiplier' },
-    { key: 'double_side_multiplier', label: 'Double Side Multiplier' },
     { key: 'spiral_binding', label: 'Binding Charge (₹)' },
     { key: 'delivery_flat', label: 'Delivery Charge (₹)' },
     { key: 'min_order', label: 'Minimum Order (₹)' },

@@ -3,6 +3,7 @@ import { supabase } from '../config/supabase.js';
 import { getProfile, upsertProfile } from '../utils/auth.js';
 import {
   calculateBookLineTotal,
+  calculateBookUnitPrice,
   calculateOrderTotals,
   calculatePaymentSplit,
   generateOrderNumber,
@@ -64,19 +65,23 @@ export async function createOrder(req, res) {
 
         if (error || !book) throw new Error(`Book not found: ${item.id}`);
 
-        const lineTotal = calculateBookLineTotal(parseFloat(book.price), item.quantity);
+        const sideMode = item.sideMode === 'double' ? 'double' : 'single';
+        const unitPrice = calculateBookUnitPrice(book.price, sideMode, settings);
+        const lineTotal = calculateBookLineTotal(unitPrice, item.quantity);
         orderItems.push({
           item_type: 'book',
           book_id: book.id,
           pdf_upload_id: null,
           quantity: item.quantity,
-          unit_price: parseFloat(book.price),
+          unit_price: unitPrice,
           line_total: lineTotal,
           metadata: {
             title: book.title,
             course_code: book.course_code,
             year: book.year,
             semester: book.semester,
+            sideMode,
+            single_side_amount: parseFloat(book.price),
           },
         });
       } else if (item.type === 'pdf') {
@@ -154,6 +159,7 @@ export async function createOrder(req, res) {
       quantity: item.quantity,
       unit_price: item.unit_price,
       line_total: item.line_total,
+      metadata: item.metadata || {},
     }));
 
     const { error: itemsError } = await supabase.from('order_items').insert(itemsToInsert);

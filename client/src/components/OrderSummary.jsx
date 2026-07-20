@@ -36,8 +36,8 @@ export default function OrderSummary({
                 </p>
                 <p className="text-xs text-neutral-500">
                   {item.type === 'book'
-                    ? `${item.course_code || 'Book'} · Qty ${item.quantity}`
-                    : `PDF Print · ${item.page_count || '—'} pages`}
+                    ? `${item.course_code || 'Book'} · Qty ${item.quantity} · ${item.sideMode === 'double' ? 'Double' : 'Single'}-sided`
+                    : `PDF Print · ${item.page_count || '—'} pages${item.print_options?.sideMode ? ` · ${item.print_options.sideMode === 'double' ? 'Double' : 'Single'}-sided` : ''}`}
                 </p>
               </div>
               <p className="font-medium shrink-0">₹{getLineTotal(item).toFixed(2)}</p>
