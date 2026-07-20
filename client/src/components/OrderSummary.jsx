@@ -52,8 +52,8 @@ export default function OrderSummary({
           <span>₹{subtotal.toFixed(2)}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-neutral-500">Delivery</span>
-          <span>₹{delivery.toFixed(2)}</span>
+          <span className="text-neutral-500">Pickup</span>
+          <span>{delivery <= 0 ? 'Free' : `₹${delivery.toFixed(2)}`}</span>
         </div>
         <div className="flex justify-between font-bold text-lg border-t border-neutral-200 dark:border-neutral-800 pt-2">
           <span>Grand Total</span>

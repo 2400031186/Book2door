@@ -4,6 +4,7 @@ import { getBooks, getBookById } from '../controllers/booksController.js';
 import { uploadPdf, quotePdfPrice } from '../controllers/uploadController.js';
 import { createOrder, getOrderById, getMyOrders, trackOrder, getCheckoutDetails } from '../controllers/ordersController.js';
 import { submitPayment, getPaymentById } from '../controllers/paymentsController.js';
+import { syncProfile } from '../controllers/profileController.js';
 import { authMiddleware, requireAuth } from '../middleware/auth.js';
 import { uploadPdf as uploadPdfMw, uploadScreenshot } from '../middleware/upload.js';
 import { uploadLimiter, paymentLimiter } from '../middleware/rateLimit.js';
@@ -22,6 +23,8 @@ router.post('/upload/pdf', uploadLimiter, authMiddleware, (req, res, next) => {
 });
 
 router.post('/upload/quote', quotePdfPrice);
+
+router.post('/profile/sync', requireAuth, syncProfile);
 
 router.post('/orders', authMiddleware, createOrder);
 router.get('/orders/checkout-details', requireAuth, getCheckoutDetails);

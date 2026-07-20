@@ -9,11 +9,11 @@ export function usePricing() {
     settingsApi
       .getPricing()
       .then(({ data }) => setPricing(data.pricing))
-      .catch(() => setPricing({ delivery_flat: 50, split_advance_percent: 50, min_order: 100 }))
+      .catch(() => setPricing({ delivery_flat: 0, pdf_bw_per_page: 1, split_advance_percent: 50, min_order: 100 }))
       .finally(() => setLoading(false));
   }, []);
 
-  const deliveryCharge = pricing && pricing.delivery_flat ? pricing.delivery_flat : 50;
+  const deliveryCharge = pricing?.delivery_flat ?? 0;
   const splitPercent = pricing?.split_advance_percent ?? 50;
   const minOrder = pricing?.min_order ?? 100;
 

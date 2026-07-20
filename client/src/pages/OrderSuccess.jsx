@@ -7,6 +7,7 @@ import Button from '../components/Button';
 import Card from '../components/Card';
 import Skeleton from '../components/Skeleton';
 import PageTransition from '../components/PageTransition';
+import { saveGuestOrder } from '../utils/guestOrders';
 
 const STATUS_LABELS = {
   pending_payment: 'Awaiting Payment',
@@ -25,7 +26,16 @@ export default function OrderSuccess() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    ordersApi.getById(id).then(({ data: d }) => setData(d)).catch(() => {}).finally(() => setLoading(false));
+    ordersApi.getById(id).then(({ data: d }) => {
+      setData(d);
+      if (d?.order) {
+        saveGuestOrder({
+          id: d.order.id,
+          order_number: d.order.order_number,
+          phone: d.order.phone,
+        });
+      }
+    }).catch(() => {}).finally(() => setLoading(false));
   }, [id]);
 
   if (loading) {
@@ -114,7 +124,7 @@ export default function OrderSuccess() {
           <div className="flex items-center gap-3 p-4 rounded-xl bg-neutral-100 dark:bg-neutral-900">
             <Clock size={20} className="text-neutral-600 dark:text-neutral-300" />
             <div>
-              <p className="font-medium">Estimated Delivery</p>
+              <p className="font-medium">Estimated Pickup</p>
               <p className="text-sm text-slate-500">3–5 business days after payment confirmation</p>
             </div>
           </div>

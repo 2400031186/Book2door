@@ -14,9 +14,9 @@ export default function Footer() {
               <span className="gradient-text">Book2Door</span>
             </div>
             <p className="text-sm text-neutral-500 dark:text-neutral-400">
-              Premium book printing and delivery for students. Get your notes and workbooks delivered to your doorstep.
+              Premium book and PDF printing for students. Free campus pickup — no account required.
             </p>
-            <p className="text-xs text-neutral-400">No account needed to order.</p>
+            <p className="text-xs text-neutral-400">Order without login · Track on this device</p>
           </div>
 
           <div>
@@ -40,9 +40,9 @@ export default function Footer() {
           <div>
             <h4 className="font-semibold mb-3 text-sm uppercase tracking-wide text-neutral-500">Features</h4>
             <ul className="space-y-2.5 text-sm text-neutral-600 dark:text-neutral-400">
-              <li>Custom PDF Printing</li>
-              <li>Binding</li>
-              <li>Campus Pickup</li>
+              <li>PDF Printing — ₹1/page</li>
+              <li>Binding — ₹75</li>
+              <li>Free Campus Pickup</li>
               <li>Split Payment</li>
             </ul>
           </div>

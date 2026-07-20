@@ -76,7 +76,7 @@ export default function Navbar() {
             {/* Sign In / User always visible on mobile top bar */}
             <SignedOut>
               <SignInButton mode="modal">
-                <Button size="sm" className="min-h-11 px-3 sm:px-4 text-xs sm:text-sm">
+                <Button size="sm" variant="secondary" className="min-h-11 px-3 sm:px-4 text-xs sm:text-sm">
                   Sign In
                 </Button>
               </SignInButton>

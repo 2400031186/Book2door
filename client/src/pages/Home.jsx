@@ -10,31 +10,32 @@ import Card from '../components/Card';
 import PageTransition from '../components/PageTransition';
 
 const features = [
-  { icon: BookOpen, title: 'Book Printing', desc: 'Curated workbooks and study materials by course code, year, and semester.' },
-  { icon: Upload, title: 'Custom PDF Printing', desc: 'Upload your notes and get them printed with binding options.' },
-  { icon: Truck, title: 'Campus Pickup', desc: 'Pick up at Aravali, Vindhya, Kailash residency, or S-block.' },
-  { icon: IndianRupee, title: 'Affordable Pricing', desc: 'Transparent pricing with no hidden charges. Split payment available.' },
-  { icon: Award, title: 'High Quality Printing', desc: 'Crisp prints on premium paper with color and B&W options.' },
+  { icon: BookOpen, title: 'Book Printing', desc: 'Browse workbooks by course code, year, and semester. No login needed.' },
+  { icon: Upload, title: 'Custom PDF Printing', desc: 'Upload notes from ₹1 per page (B&W) with binding included at ₹75.' },
+  { icon: Truck, title: 'Free Campus Pickup', desc: 'Pick up at Aravali, Vindhya, Kailash residency, or S-block — no extra charge.' },
+  { icon: IndianRupee, title: 'Affordable Pricing', desc: 'Transparent prices, free pickup, and optional split payment at checkout.' },
+  { icon: Award, title: 'High Quality Printing', desc: 'Crisp B&W prints on quality paper, ready for your semester.' },
 ];
 
 const stats = [
-  { value: '2,500+', label: 'Orders Delivered' },
+  { value: '2,500+', label: 'Orders Completed' },
   { value: '1,200+', label: 'Happy Students' },
-  { value: '3 Days', label: 'Avg. Delivery Time' },
+  { value: '3 Days', label: 'Avg. Pickup Time' },
 ];
 
 const testimonials = [
   { name: 'Priya S.', yearInfo: 'Year 2, Sem 1', text: 'Got my DSA notes printed and bound perfectly. Pickup was easy!', rating: 5 },
-  { name: 'Rahul M.', yearInfo: 'Year 1, Sem 2', text: 'The split payment option is a lifesaver. Quality prints every time.', rating: 5 },
+  { name: 'Rahul M.', yearInfo: 'Year 1, Sem 2', text: 'Ordered without an account — tracked my order with just my phone number.', rating: 5 },
   { name: 'Ananya K.', yearInfo: 'Year 2, Sem 2', text: 'Best platform for workbook printing. Much better than local shops.', rating: 5 },
 ];
 
 const faqs = [
-  { q: 'Do I need an account to order?', a: 'No. You can browse, upload, checkout, and pay without signing in. Sign in only if you want saved details or order history.' },
-  { q: 'How long does delivery take?', a: 'Orders are typically ready for campus pickup within 3–5 business days after payment confirmation.' },
-  { q: 'Can I upload my own PDF?', a: 'Yes! Upload any PDF and choose color/B&W, single/double sided, copies, and binding.' },
-  { q: 'What is split payment?', a: 'Pay 50% advance online via UPI and the remaining 50% as cash on delivery / pickup.' },
-  { q: 'How do I track my order?', a: 'Use your order ID or phone number on the Track Order page.' },
+  { q: 'Do I need an account to order?', a: 'No. Browse books, upload PDFs, checkout, pay, and track your order — all without signing in. Login is optional and only helps save your details for next time.' },
+  { q: 'How much does PDF printing cost?', a: 'Black & White printing is ₹1 per page. Binding is ₹75 and included on every PDF order. Pickup is free.' },
+  { q: 'How long until my order is ready?', a: 'Orders are usually ready for campus pickup within 3–5 business days after payment is confirmed.' },
+  { q: 'Where do I pick up my order?', a: 'Choose your pickup location at checkout: Aravali hostel, Vindhya hostel, Kailash residency, or S-block.' },
+  { q: 'How do I track my order without login?', a: 'After ordering, go to Track Order — your order appears automatically on this device. You can also search using your order ID or the phone number used at checkout.' },
+  { q: 'What is split payment?', a: 'Pay 50% advance online via UPI and the remaining 50% in cash when you pick up your order.' },
 ];
 
 function FAQItem({ q, a }) {
@@ -58,8 +59,8 @@ export default function Home() {
   return (
     <PageTransition>
       <Helmet>
-        <title>Book2Door — Get Your Books Delivered</title>
-        <meta name="description" content="Premium book printing and campus pickup for students. Upload PDFs, browse workbooks — no account needed." />
+        <title>Book2Door — Print &amp; Campus Pickup</title>
+        <meta name="description" content="Print books and PDFs from ₹1/page. Free campus pickup. Order without an account." />
       </Helmet>
 
       {/* Hero — brand first, one composition */}
@@ -81,9 +82,9 @@ export default function Home() {
               Done.
             </h1>
             <p className="text-base sm:text-lg text-neutral-600 dark:text-neutral-400 mb-3 max-w-lg">
-              Order workbooks or upload your PDF. Pay by UPI. Pick up on campus.
+              Order workbooks or upload your PDF from ₹1/page. Pay by UPI. Pick up on campus — free.
             </p>
-            <p className="text-sm text-neutral-500 mb-8">No account needed to order.</p>
+            <p className="text-sm text-neutral-500 mb-8">No account needed. Login is optional.</p>
             <div className="flex flex-col sm:flex-row gap-3">
               <Link to="/books" className="w-full sm:w-auto">
                 <Button size="lg" className="w-full sm:w-auto"><BookOpen size={20} /> Browse Books</Button>

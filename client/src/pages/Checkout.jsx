@@ -12,6 +12,7 @@ import Card from '../components/Card';
 import { Input, Textarea, Select } from '../components/Input';
 import OrderSummary, { useOrderTotals } from '../components/OrderSummary';
 import PageTransition from '../components/PageTransition';
+import { saveGuestOrder } from '../utils/guestOrders';
 
 const CHECKOUT_STORAGE_KEY = 'book2door-checkout';
 
@@ -142,6 +143,12 @@ export default function Checkout() {
       const { data: result } = await ordersApi.create(payload);
       setOrderData(result);
 
+      saveGuestOrder({
+        id: result.order.id,
+        order_number: result.order.order_number,
+        phone: data.phone,
+      });
+
       saveCheckoutDetails({
         customer_name: data.customer_name,
         college_id: data.college_id,
@@ -207,6 +214,11 @@ export default function Checkout() {
       formData.append('screenshot', screenshot);
 
       await paymentsApi.submit(formData);
+      saveGuestOrder({
+        id: orderData.order.id,
+        order_number: orderData.order.order_number,
+        phone: orderData.order.phone,
+      });
       clearCart();
       navigate(`/order/${orderData.order.id}`);
     } catch (err) {
@@ -370,7 +382,7 @@ export default function Checkout() {
                   </div>
                   {upiInfo?.paymentType === 'split' && orderData?.order && (
                     <p className="text-sm text-neutral-500">
-                      Remaining ₹{Number(orderData.order.cod_amount).toFixed(2)} due on delivery
+                      Remaining ₹{Number(orderData.order.cod_amount).toFixed(2)} due at pickup
                     </p>
                   )}
                   <p className="text-xs text-neutral-500">Scan QR → Pay → Upload screenshot below</p>

@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
 import { supabase } from '../config/supabase.js';
-import { getProfile } from '../utils/auth.js';
+import { getProfile, upsertProfile } from '../utils/auth.js';
 import {
   calculateBookLineTotal,
   calculateOrderTotals,
@@ -138,6 +138,14 @@ export async function createOrder(req, res) {
 
     if (orderError) throw orderError;
 
+    if (req.user?.id) {
+      await supabase
+        .from('orders')
+        .update({ user_id: req.user.id })
+        .eq('phone', phone)
+        .is('user_id', null);
+    }
+
     const itemsToInsert = orderItems.map((item) => ({
       order_id: order.id,
       item_type: item.item_type,
@@ -152,16 +160,13 @@ export async function createOrder(req, res) {
     if (itemsError) throw itemsError;
 
     if (req.user?.id) {
-      await supabase.from('profiles').upsert(
-        {
-          id: req.user.id,
-          full_name: customer_name,
-          college_id,
-          phone,
-          pickup_location,
-        },
-        { onConflict: 'id' }
-      );
+      await upsertProfile(req.user, {
+        full_name: customer_name,
+        email: req.user.email,
+        college_id,
+        phone,
+        pickup_location,
+      });
     }
 
     await supabase.from('order_status_history').insert({
@@ -226,15 +231,40 @@ export async function getMyOrders(req, res) {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    const { data: orders, error } = await supabase
+    const profile = await getProfile(req.user.id);
+    let orders = [];
+
+    const { data: linkedOrders, error: linkedError } = await supabase
       .from('orders')
       .select('*')
       .eq('user_id', req.user.id)
       .order('created_at', { ascending: false });
 
-    if (error) throw error;
+    if (linkedError) throw linkedError;
+    orders = linkedOrders || [];
 
-    if (!orders?.length) {
+    if (profile?.phone) {
+      const { data: phoneOrders, error: phoneError } = await supabase
+        .from('orders')
+        .select('*')
+        .is('user_id', null)
+        .eq('phone', profile.phone)
+        .order('created_at', { ascending: false });
+
+      if (phoneError) throw phoneError;
+
+      const seen = new Set(orders.map((o) => o.id));
+      for (const order of phoneOrders || []) {
+        if (!seen.has(order.id)) {
+          orders.push(order);
+          seen.add(order.id);
+        }
+      }
+
+      orders.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    }
+
+    if (!orders.length) {
       return res.json([]);
     }
 

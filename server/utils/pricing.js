@@ -33,13 +33,13 @@ export function invalidateSettingsCache() {
 
 function getDefaultSettings() {
   return {
-    pdf_bw_per_page: 1.5,
+    pdf_bw_per_page: 1,
     pdf_color_per_page: 3.0,
     single_side_multiplier: 1.0,
     double_side_multiplier: 0.7,
     // Binding is fixed permanently at ₹75
     spiral_binding: 75,
-    delivery_flat: 50,
+    delivery_flat: 0,
     min_order: 100,
     split_advance_percent: 50,
     upi_id: 'book2door@ybl',

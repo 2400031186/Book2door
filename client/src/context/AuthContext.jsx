@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { useUser, useAuth as useClerkAuth } from '@clerk/clerk-react';
 import { setAuthTokenGetter } from '../services/api';
-import { adminApi } from '../services/api';
+import { adminApi, profileApi } from '../services/api';
 
 const AuthContext = createContext();
 
@@ -32,7 +32,12 @@ export function AuthProvider({ children }) {
       .then(() => setIsAdmin(true))
       .catch(() => setIsAdmin(false))
       .finally(() => setAdminChecked(true));
-  }, [isSignedIn, authLoaded, user?.id]);
+
+    profileApi.sync({
+      full_name: user?.fullName || '',
+      email: user?.primaryEmailAddress?.emailAddress || '',
+    }).catch(() => {});
+  }, [isSignedIn, authLoaded, user?.id, user?.fullName, user?.primaryEmailAddress?.emailAddress]);
 
   return (
     <AuthContext.Provider

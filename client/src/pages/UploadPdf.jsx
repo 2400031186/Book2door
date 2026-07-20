@@ -98,9 +98,17 @@ export default function UploadPdf() {
 
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <h1 className="text-2xl sm:text-3xl font-bold mb-2">Upload PDF for Printing</h1>
-        <p className="text-neutral-500 mb-6 sm:mb-8 text-sm sm:text-base">
+        <p className="text-neutral-500 mb-4 sm:mb-6 text-sm sm:text-base">
           Upload your notes and customize print options. No account needed.
         </p>
+
+        <Card className="mb-6 p-4 bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800">
+          <p className="text-sm font-medium mb-1">Printing price</p>
+          <p className="text-sm text-neutral-600 dark:text-neutral-300">
+            Black &amp; White: <span className="font-bold">₹{pricing?.pdf_bw_per_page ?? 1} per page</span>
+            {' · '}Binding: <span className="font-bold">₹75</span> (included on every order)
+          </p>
+        </Card>
 
         {addedToCart && (
           <Card className="mb-6 border-2 border-green-500/30 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -180,6 +188,7 @@ export default function UploadPdf() {
               </div>
               <div className="grid grid-cols-2 gap-4 text-sm mb-4">
                 <div><span className="text-neutral-500">Pages:</span> {result.page_count}</div>
+                <div><span className="text-neutral-500">Rate:</span> ₹{pricing?.pdf_bw_per_page ?? 1}/page</div>
                 <div><span className="text-neutral-500">Sides:</span> {sideMode === 'double' ? 'Double' : 'Single'}</div>
                 <div><span className="text-neutral-500">Copies:</span> {copies}</div>
                 <div><span className="text-neutral-500">Binding:</span> +₹75</div>

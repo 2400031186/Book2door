@@ -68,6 +68,10 @@ export const ordersApi = {
   track: (query) => api.get(`/track/${encodeURIComponent(query)}`),
 };
 
+export const profileApi = {
+  sync: (data) => api.post('/profile/sync', data),
+};
+
 export const paymentsApi = {
   submit: (formData) => api.post('/payments', formData),
 };

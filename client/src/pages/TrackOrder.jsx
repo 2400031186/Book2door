@@ -7,6 +7,11 @@ import {
 } from 'lucide-react';
 import { ordersApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import {
+  fetchGuestOrderDetails,
+  loadGuestOrders,
+  mergeOrderResults,
+} from '../utils/guestOrders';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import { Input } from '../components/Input';
@@ -228,37 +233,57 @@ export default function TrackOrder() {
   useEffect(() => {
     if (authLoading) return;
 
-    if (isSignedIn) {
+    let cancelled = false;
+
+    async function loadOrders() {
       setLoading(true);
       setError('');
-      ordersApi
-        .getMine()
-        .then(({ data }) => {
-          setResults(Array.isArray(data) ? data : []);
+
+      try {
+        const guestSaved = loadGuestOrders();
+        const guestResults = guestSaved.length
+          ? await fetchGuestOrderDetails(guestSaved)
+          : [];
+
+        if (isSignedIn) {
+          const { data } = await ordersApi.getMine();
+          const accountResults = Array.isArray(data) ? data : [];
+          if (!cancelled) {
+            setResults(mergeOrderResults(accountResults, guestResults));
+            setSearched(false);
+          }
+        } else if (!cancelled) {
+          setResults(guestResults);
           setSearched(false);
-        })
-        .catch((err) => {
-          setResults([]);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          const guestSaved = loadGuestOrders();
+          if (guestSaved.length) {
+            const guestResults = await fetchGuestOrderDetails(guestSaved);
+            setResults(guestResults);
+          } else {
+            setResults([]);
+          }
           const msg =
             err.response?.data?.error ||
             (err.response?.status === 401
-              ? 'Please sign in again to view your orders'
-              : err.message?.includes('Network')
-                ? 'Cannot reach the API. Check connection and try again.'
-                : 'Failed to load your orders');
-          setError(msg);
-        })
-        .finally(() => setLoading(false));
-      return;
+              ? 'Could not load account orders. Your saved orders are shown below.'
+              : 'Failed to load orders');
+          setError(isSignedIn ? msg : '');
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     }
 
-    setResults(null);
-    setError('');
+    loadOrders();
+    return () => { cancelled = true; };
   }, [isSignedIn, authLoading]);
 
   useEffect(() => {
     const initial = searchParams.get('query');
-    if (!initial?.trim() || isSignedIn || authLoading) return;
+    if (!initial?.trim() || authLoading) return;
 
     setQuery(initial.trim());
     setLoading(true);
@@ -271,7 +296,7 @@ export default function TrackOrder() {
       })
       .catch((err) => setError(err.response?.data?.error || 'No orders found'))
       .finally(() => setLoading(false));
-  }, [searchParams, isSignedIn, authLoading]);
+  }, [searchParams, authLoading]);
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -284,7 +309,12 @@ export default function TrackOrder() {
 
     try {
       const { data } = await ordersApi.track(query.trim());
-      setResults(Array.isArray(data) ? data : [data]);
+      const found = Array.isArray(data) ? data : [data];
+      const guestSaved = loadGuestOrders();
+      const guestResults = guestSaved.length
+        ? await fetchGuestOrderDetails(guestSaved)
+        : [];
+      setResults(mergeOrderResults(found, guestResults));
     } catch (err) {
       setError(err.response?.data?.error || 'No orders found. Check your order ID or phone number.');
     } finally {
@@ -293,7 +323,7 @@ export default function TrackOrder() {
   };
 
   const list = Array.isArray(results) ? results : [];
-  const showGuestEmpty = !isSignedIn && !loading && !searched && !list.length;
+  const showGuestEmpty = !loading && !searched && list.length === 0;
   const showNoResults = searched && !loading && list.length === 0 && !error;
 
   return (
@@ -307,7 +337,7 @@ export default function TrackOrder() {
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold mb-2">Track Order</h1>
           <p className="text-neutral-500 text-sm sm:text-base max-w-sm mx-auto">
-            Enter your order ID or 10-digit phone number. No login needed.
+            Track with your order ID or phone. No login required — your orders are saved on this device.
           </p>
         </div>
 
@@ -344,26 +374,32 @@ export default function TrackOrder() {
         )}
 
         {showGuestEmpty && (
-          <div className="text-center py-6 space-y-4">
-            <p className="text-sm text-neutral-500">
-              Have an account? Sign in to see all your orders in one place.
-            </p>
-            <SignInButton mode="modal">
-              <Button variant="secondary" size="sm">Sign In</Button>
-            </SignInButton>
-          </div>
-        )}
-
-        {!loading && isSignedIn && list.length === 0 && !searched && !error && (
-          <Card className="text-center py-12 p-6">
+          <Card className="text-center py-10 p-6">
             <Package size={40} className="mx-auto mb-3 text-neutral-300" />
             <p className="font-semibold mb-1">No orders yet</p>
-            <p className="text-sm text-neutral-500 mb-5">Place an order and track it here.</p>
-            <div className="flex flex-col sm:flex-row gap-2 justify-center">
+            <p className="text-sm text-neutral-500 mb-4">
+              Place an order without signing in. It will appear here automatically.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2 justify-center mb-4">
               <Link to="/books"><Button>Browse Books</Button></Link>
               <Link to="/upload"><Button variant="secondary">Upload PDF</Button></Link>
             </div>
+            <p className="text-xs text-neutral-400">
+              Optional:{' '}
+              <SignInButton mode="modal">
+                <button type="button" className="underline underline-offset-2">Sign in</button>
+              </SignInButton>
+              {' '}to sync orders across devices.
+            </p>
           </Card>
+        )}
+
+        {!showGuestEmpty && list.length > 0 && !searched && (
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">
+              Your orders ({list.length})
+            </h2>
+          </div>
         )}
 
         {showNoResults && (
@@ -373,14 +409,6 @@ export default function TrackOrder() {
               Double-check the order ID (starts with B2D-) or the phone used at checkout.
             </p>
           </Card>
-        )}
-
-        {isSignedIn && list.length > 0 && !searched && (
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">
-              Your orders ({list.length})
-            </h2>
-          </div>
         )}
 
         {searched && list.length > 0 && (
