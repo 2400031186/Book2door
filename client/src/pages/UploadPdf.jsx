@@ -99,7 +99,7 @@ export default function UploadPdf() {
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <h1 className="text-2xl sm:text-3xl font-bold mb-2">Upload PDF for Printing</h1>
         <p className="text-neutral-500 mb-4 sm:mb-6 text-sm sm:text-base">
-          Upload your notes and customize print options. No account needed.
+          Upload your notes and customize print options. Sign in required at checkout.
         </p>
 
         <Card className="mb-6 p-4 bg-neutral-50 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-800">

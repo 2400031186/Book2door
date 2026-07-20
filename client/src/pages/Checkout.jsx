@@ -12,9 +12,8 @@ import Card from '../components/Card';
 import { Input, Textarea, Select } from '../components/Input';
 import OrderSummary, { useOrderTotals } from '../components/OrderSummary';
 import PageTransition from '../components/PageTransition';
-import { saveGuestOrder } from '../utils/guestOrders';
+import RequireAuth from '../components/RequireAuth';
 import { loadSavedCheckout, saveCheckoutDetails } from '../utils/checkoutStorage';
-import GuestCheckoutNotice from '../components/GuestCheckoutNotice';
 import { SUPPORT_PHONE_DISPLAY, SUPPORT_PHONE_TEL } from '../constants/support';
 
 export default function Checkout() {
@@ -55,39 +54,27 @@ export default function Checkout() {
   }, []);
 
   useEffect(() => {
-    if (isSignedIn) {
-      ordersApi.getCheckoutDetails()
-        .then(({ data }) => {
-          if (!data) return;
+    if (!isSignedIn) return;
 
-          if (data.customer_name) setValue('customer_name', data.customer_name);
-          if (data.college_id) setValue('college_id', data.college_id);
-          if (data.phone) setValue('phone', data.phone);
-          if (data.pickup_location) {
-            setValue('pickup_location', data.pickup_location);
-            setSavedPickup(data.pickup_location);
-            saveCheckoutDetails({
-              customer_name: data.customer_name || '',
-              college_id: data.college_id || '',
-              phone: data.phone || '',
-              pickup_location: data.pickup_location,
-            });
-          }
-        })
-        .catch(() => {});
-      return;
-    }
+    ordersApi.getCheckoutDetails()
+      .then(({ data }) => {
+        if (!data) return;
 
-    const guestSaved = loadSavedCheckout();
-    if (!guestSaved) return;
-
-    if (guestSaved.customer_name) setValue('customer_name', guestSaved.customer_name);
-    if (guestSaved.college_id) setValue('college_id', guestSaved.college_id);
-    if (guestSaved.phone) setValue('phone', guestSaved.phone);
-    if (guestSaved.pickup_location) {
-      setValue('pickup_location', guestSaved.pickup_location);
-      setSavedPickup(guestSaved.pickup_location);
-    }
+        if (data.customer_name) setValue('customer_name', data.customer_name);
+        if (data.college_id) setValue('college_id', data.college_id);
+        if (data.phone) setValue('phone', data.phone);
+        if (data.pickup_location) {
+          setValue('pickup_location', data.pickup_location);
+          setSavedPickup(data.pickup_location);
+          saveCheckoutDetails({
+            customer_name: data.customer_name || '',
+            college_id: data.college_id || '',
+            phone: data.phone || '',
+            pickup_location: data.pickup_location,
+          });
+        }
+      })
+      .catch(() => {});
   }, [isSignedIn, setValue]);
 
   useEffect(() => {
@@ -114,11 +101,7 @@ export default function Checkout() {
   const pickupOptions = showSavedPickupOnly
     ? [savedPickup]
     : pickupLocations;
-  const submitLabel = loading
-    ? 'Creating Order...'
-    : isSignedIn
-      ? 'Continue to Payment'
-      : 'Continue to Payment (Guest)';
+  const submitLabel = loading ? 'Creating Order...' : 'Continue to Payment';
 
   const onSubmitOrder = async (data) => {
     if (grandTotal < minOrder) {
@@ -143,12 +126,6 @@ export default function Checkout() {
       const { data: result } = await ordersApi.create(payload);
       setOrderData(result);
 
-      saveGuestOrder({
-        id: result.order.id,
-        order_number: result.order.order_number,
-        phone: data.phone,
-      });
-
       saveCheckoutDetails({
         customer_name: data.customer_name,
         college_id: data.college_id,
@@ -172,11 +149,10 @@ export default function Checkout() {
 
       setStep('payment');
     } catch (err) {
-      const msg = err.response?.data?.error || 'Failed to create order';
       setError(
         err.response?.status === 401
-          ? 'Could not create order. Please try again — no sign in is required.'
-          : msg
+          ? 'Please sign in to place your order.'
+          : err.response?.data?.error || 'Failed to create order'
       );
     } finally {
       setLoading(false);
@@ -219,11 +195,6 @@ export default function Checkout() {
       formData.append('screenshot', screenshot);
 
       await paymentsApi.submit(formData);
-      saveGuestOrder({
-        id: orderData.order.id,
-        order_number: orderData.order.order_number,
-        phone: orderData.order.phone,
-      });
       clearCart();
       navigate(`/order/${orderData.order.id}`);
     } catch (err) {
@@ -242,19 +213,15 @@ export default function Checkout() {
   };
 
   return (
-    <PageTransition>
-      <Helmet><title>Checkout — Book2Door</title></Helmet>
+    <RequireAuth>
+      <PageTransition>
+        <Helmet><title>Checkout — Book2Door</title></Helmet>
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
-        <h1 className="text-2xl sm:text-3xl font-bold mb-2">Checkout</h1>
-        <p className="text-neutral-500 mb-4 text-sm sm:text-base">
-          {step === 'form' ? 'Enter your details and choose a pickup location' : 'Complete your UPI payment'}
-        </p>
-        {step === 'form' && !isSignedIn && (
-          <div className="mb-6 sm:mb-8">
-            <GuestCheckoutNotice />
-          </div>
-        )}
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2">Checkout</h1>
+          <p className="text-neutral-500 mb-6 sm:mb-8 text-sm sm:text-base">
+            {step === 'form' ? 'Enter your details and choose a pickup location' : 'Complete your UPI payment'}
+          </p>
 
         {step === 'form' ? (
           <form onSubmit={handleSubmit(onSubmitOrder)} className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
@@ -438,7 +405,8 @@ export default function Checkout() {
             </div>
           </div>
         )}
-      </div>
-    </PageTransition>
+        </div>
+      </PageTransition>
+    </RequireAuth>
   );
 }

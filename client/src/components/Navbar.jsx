@@ -1,4 +1,4 @@
-import { Link, NavLink, useLocation } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import { BookOpen, ShoppingCart, Sun, Moon, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import {
@@ -20,15 +20,11 @@ const navLinks = [
   { to: '/cart', label: 'Cart' },
 ];
 
-const guestFirstPaths = ['/cart', '/checkout', '/upload'];
-
 export default function Navbar() {
   const { toggleTheme, isDark } = useTheme();
   const { itemCount } = useCart();
   const { isAdmin } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { pathname } = useLocation();
-  const guestCheckoutFlow = guestFirstPaths.some((path) => pathname.startsWith(path));
 
   return (
     <nav className="sticky top-0 z-40 glass border-b border-neutral-200 dark:border-neutral-800">
@@ -78,20 +74,16 @@ export default function Navbar() {
             </Link>
 
             <SignedOut>
-              {!guestCheckoutFlow && (
-                <>
-                  <SignInButton mode="modal">
-                    <Button size="sm" variant="secondary" className="min-h-11 px-3 sm:px-4 text-xs sm:text-sm">
-                      Sign In
-                    </Button>
-                  </SignInButton>
-                  <div className="hidden md:block">
-                    <SignUpButton mode="modal">
-                      <Button variant="secondary" size="sm">Sign Up</Button>
-                    </SignUpButton>
-                  </div>
-                </>
-              )}
+              <SignInButton mode="modal">
+                <Button size="sm" variant="secondary" className="min-h-11 px-3 sm:px-4 text-xs sm:text-sm">
+                  Sign In
+                </Button>
+              </SignInButton>
+              <div className="hidden md:block">
+                <SignUpButton mode="modal">
+                  <Button variant="secondary" size="sm">Sign Up</Button>
+                </SignUpButton>
+              </div>
             </SignedOut>
             <SignedIn>
               <div className="hidden md:block">
@@ -134,28 +126,14 @@ export default function Navbar() {
                 {link.label}
               </NavLink>
             ))}
-            {guestCheckoutFlow && (
-              <p className="px-3 py-2 text-xs text-neutral-500">
-                No login needed — checkout as guest.
-              </p>
-            )}
             <SignedOut>
-              <SignInButton mode="modal">
-                <button
-                  type="button"
-                  className="block px-3 py-3 w-full text-left text-sm font-medium rounded-xl min-h-11 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-300"
-                  onClick={() => setMobileOpen(false)}
-                >
-                  Sign In <span className="text-xs text-neutral-400">(optional)</span>
-                </button>
-              </SignInButton>
               <SignUpButton mode="modal">
                 <button
                   type="button"
-                  className="block px-3 py-3 w-full text-left text-sm font-medium rounded-xl min-h-11 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-300"
+                  className="block px-3 py-3 w-full text-left text-sm font-medium rounded-xl min-h-11 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                   onClick={() => setMobileOpen(false)}
                 >
-                  Sign Up <span className="text-xs text-neutral-400">(optional)</span>
+                  Sign Up
                 </button>
               </SignUpButton>
             </SignedOut>

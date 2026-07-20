@@ -15,9 +15,9 @@ export default function Footer() {
               <span className="gradient-text">Book2Door</span>
             </div>
             <p className="text-sm text-neutral-500 dark:text-neutral-400">
-              Premium book and PDF printing for students. Free campus pickup — no account required.
+              Premium book and PDF printing for students. Free campus pickup.
             </p>
-            <p className="text-xs text-neutral-400">Order without login · Track on this device</p>
+            <p className="text-xs text-neutral-400">Sign in to checkout · Track your orders anytime</p>
           </div>
 
           <div>

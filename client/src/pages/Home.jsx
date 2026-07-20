@@ -10,7 +10,7 @@ import Card from '../components/Card';
 import PageTransition from '../components/PageTransition';
 
 const features = [
-  { icon: BookOpen, title: 'Book Printing', desc: 'Browse workbooks by course code, year, and semester. No login needed.' },
+  { icon: BookOpen, title: 'Book Printing', desc: 'Browse workbooks by course code, year, and semester. Sign in to order.' },
   { icon: Upload, title: 'Custom PDF Printing', desc: 'Upload notes from ₹1 per page (B&W) with binding included at ₹75.' },
   { icon: Truck, title: 'Free Campus Pickup', desc: 'Pick up at Aravali, Vindhya, Kailash residency, or S-block — no extra charge.' },
   { icon: IndianRupee, title: 'Affordable Pricing', desc: 'Transparent prices, free pickup, and optional split payment at checkout.' },
@@ -30,11 +30,11 @@ const testimonials = [
 ];
 
 const faqs = [
-  { q: 'Do I need an account to order?', a: 'No. Browse books, upload PDFs, checkout, pay, and track your order — all without signing in. Login is optional and only helps save your details for next time.' },
+  { q: 'Do I need an account to order?', a: 'Yes. Sign in or create an account to checkout and place orders. You can browse books and upload PDFs before signing in.' },
   { q: 'How much does PDF printing cost?', a: 'Black & White printing is ₹1 per page. Binding is ₹75 and included on every PDF order. Pickup is free.' },
   { q: 'How long until my order is ready?', a: 'Orders are usually ready for campus pickup within 3–5 business days after payment is confirmed.' },
   { q: 'Where do I pick up my order?', a: 'Choose your pickup location at checkout: Aravali hostel, Vindhya hostel, Kailash residency, or S-block.' },
-  { q: 'How do I track my order without login?', a: 'After ordering, go to Track Order — your order appears automatically on this device. You can also search using your order ID or the phone number used at checkout.' },
+  { q: 'How do I track my order?', a: 'Sign in and go to Track Order to see all your orders. You can also search using your order ID or the phone number used at checkout.' },
   { q: 'What is split payment?', a: 'Pay 50% advance online via UPI and the remaining 50% in cash when you pick up your order.' },
 ];
 
@@ -60,7 +60,7 @@ export default function Home() {
     <PageTransition>
       <Helmet>
         <title>Book2Door — Print &amp; Campus Pickup</title>
-        <meta name="description" content="Print books and PDFs from ₹1/page. Free campus pickup. Order without an account." />
+        <meta name="description" content="Print books and PDFs from ₹1/page. Free campus pickup. Sign in to order." />
       </Helmet>
 
       {/* Hero — brand first, one composition */}
@@ -84,7 +84,7 @@ export default function Home() {
             <p className="text-base sm:text-lg text-neutral-600 dark:text-neutral-400 mb-3 max-w-lg">
               Order workbooks or upload your PDF from ₹1/page. Pay by UPI. Pick up on campus — free.
             </p>
-            <p className="text-sm text-neutral-500 mb-8">No account needed. Login is optional.</p>
+            <p className="text-sm text-neutral-500 mb-8">Sign in required to checkout and place orders.</p>
             <div className="flex flex-col sm:flex-row gap-3">
               <Link to="/books" className="w-full sm:w-auto">
                 <Button size="lg" className="w-full sm:w-auto"><BookOpen size={20} /> Browse Books</Button>

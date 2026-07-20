@@ -7,11 +7,6 @@ import {
 } from 'lucide-react';
 import { ordersApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import {
-  fetchGuestOrderDetails,
-  loadGuestOrders,
-  mergeOrderResults,
-} from '../utils/guestOrders';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import { Input } from '../components/Input';
@@ -240,35 +235,24 @@ export default function TrackOrder() {
       setError('');
 
       try {
-        const guestSaved = loadGuestOrders();
-        const guestResults = guestSaved.length
-          ? await fetchGuestOrderDetails(guestSaved)
-          : [];
-
         if (isSignedIn) {
           const { data } = await ordersApi.getMine();
           const accountResults = Array.isArray(data) ? data : [];
           if (!cancelled) {
-            setResults(mergeOrderResults(accountResults, guestResults));
+            setResults(accountResults);
             setSearched(false);
           }
         } else if (!cancelled) {
-          setResults(guestResults);
+          setResults([]);
           setSearched(false);
         }
       } catch (err) {
         if (!cancelled) {
-          const guestSaved = loadGuestOrders();
-          if (guestSaved.length) {
-            const guestResults = await fetchGuestOrderDetails(guestSaved);
-            setResults(guestResults);
-          } else {
-            setResults([]);
-          }
+          setResults([]);
           const msg =
             err.response?.data?.error ||
             (err.response?.status === 401
-              ? 'Could not load account orders. Your saved orders are shown below.'
+              ? 'Please sign in to view your orders.'
               : 'Failed to load orders');
           setError(isSignedIn ? msg : '');
         }
@@ -309,12 +293,7 @@ export default function TrackOrder() {
 
     try {
       const { data } = await ordersApi.track(query.trim());
-      const found = Array.isArray(data) ? data : [data];
-      const guestSaved = loadGuestOrders();
-      const guestResults = guestSaved.length
-        ? await fetchGuestOrderDetails(guestSaved)
-        : [];
-      setResults(mergeOrderResults(found, guestResults));
+      setResults(Array.isArray(data) ? data : [data]);
     } catch (err) {
       setError(err.response?.data?.error || 'No orders found. Check your order ID or phone number.');
     } finally {
@@ -337,7 +316,9 @@ export default function TrackOrder() {
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold mb-2">Track Order</h1>
           <p className="text-neutral-500 text-sm sm:text-base max-w-sm mx-auto">
-            Track with your order ID or phone. No login required — your orders are saved on this device.
+            {isSignedIn
+              ? 'Your orders are shown below. You can also search by order ID or phone.'
+              : 'Sign in to see your orders, or search by order ID or phone number.'}
           </p>
         </div>
 
@@ -373,24 +354,30 @@ export default function TrackOrder() {
           </div>
         )}
 
-        {showGuestEmpty && (
+        {showGuestEmpty && !isSignedIn && (
+          <Card className="text-center py-10 p-6 mb-6">
+            <Package size={40} className="mx-auto mb-3 text-neutral-300" />
+            <p className="font-semibold mb-1">Sign in to view your orders</p>
+            <p className="text-sm text-neutral-500 mb-4">
+              Your order history is available after you sign in. You can still search below using order ID or phone.
+            </p>
+            <SignInButton mode="modal">
+              <Button>Sign In</Button>
+            </SignInButton>
+          </Card>
+        )}
+
+        {showGuestEmpty && isSignedIn && (
           <Card className="text-center py-10 p-6">
             <Package size={40} className="mx-auto mb-3 text-neutral-300" />
             <p className="font-semibold mb-1">No orders yet</p>
             <p className="text-sm text-neutral-500 mb-4">
-              Place an order without signing in. It will appear here automatically.
+              Place your first order from the books catalog or by uploading a PDF.
             </p>
-            <div className="flex flex-col sm:flex-row gap-2 justify-center mb-4">
+            <div className="flex flex-col sm:flex-row gap-2 justify-center">
               <Link to="/books"><Button>Browse Books</Button></Link>
               <Link to="/upload"><Button variant="secondary">Upload PDF</Button></Link>
             </div>
-            <p className="text-xs text-neutral-400">
-              Optional:{' '}
-              <SignInButton mode="modal">
-                <button type="button" className="underline underline-offset-2">Sign in</button>
-              </SignInButton>
-              {' '}to sync orders across devices.
-            </p>
           </Card>
         )}
 

@@ -1,17 +1,19 @@
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import { SignInButton, SignUpButton } from '@clerk/clerk-react';
 import { Trash2, Plus, Minus, ShoppingBag, FileText } from 'lucide-react';
 import { useCart, getLineTotal } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import { getBookCoverUrl } from '../constants/books';
 import usePricing from '../hooks/usePricing';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import OrderSummary, { useOrderTotals } from '../components/OrderSummary';
 import PageTransition from '../components/PageTransition';
-import GuestCheckoutNotice from '../components/GuestCheckoutNotice';
 
 export default function Cart() {
   const { items, ready, updateQuantity, removeItem, clearCart } = useCart();
+  const { isSignedIn } = useAuth();
   const { minOrder } = usePricing();
   const { grandTotal } = useOrderTotals('split');
   const canCheckout = grandTotal >= minOrder;
@@ -31,7 +33,7 @@ export default function Cart() {
         <div className="max-w-2xl mx-auto px-4 py-20 text-center">
           <ShoppingBag size={64} className="mx-auto mb-6 text-neutral-300" />
           <h1 className="text-2xl font-bold mb-2">Your cart is empty</h1>
-          <p className="text-neutral-500 mb-6">Browse books or upload a PDF — no account needed.</p>
+          <p className="text-neutral-500 mb-6">Browse books or upload a PDF to get started.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link to="/books"><Button className="w-full sm:w-auto">Browse Books</Button></Link>
             <Link to="/upload"><Button variant="secondary" className="w-full sm:w-auto">Upload PDF</Button></Link>
@@ -124,15 +126,26 @@ export default function Cart() {
             <Card className="sticky bottom-4 lg:top-24 p-4 sm:p-6">
               <h2 className="font-semibold mb-4">Price Summary</h2>
               <OrderSummary showItems={false} showMinOrderWarning />
-              <div className="mt-3">
-                <GuestCheckoutNotice compact />
-              </div>
 
-              {canCheckout ? (
+              {canCheckout && isSignedIn && (
                 <Link to="/checkout" className="block mt-4 sm:mt-6">
-                  <Button className="w-full" size="lg">Checkout as Guest</Button>
+                  <Button className="w-full" size="lg">Proceed to Checkout</Button>
                 </Link>
-              ) : (
+              )}
+
+              {canCheckout && !isSignedIn && (
+                <div className="mt-4 sm:mt-6 space-y-2">
+                  <p className="text-xs text-neutral-500">Sign in required to place your order.</p>
+                  <SignInButton mode="redirect" forceRedirectUrl="/checkout">
+                    <Button className="w-full" size="lg">Sign In to Checkout</Button>
+                  </SignInButton>
+                  <SignUpButton mode="redirect" forceRedirectUrl="/checkout">
+                    <Button variant="secondary" className="w-full" size="lg">Create Account</Button>
+                  </SignUpButton>
+                </div>
+              )}
+
+              {!canCheckout && (
                 <Button className="w-full mt-4 sm:mt-6" size="lg" disabled>
                   Minimum order ₹{minOrder}
                 </Button>

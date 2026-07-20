@@ -7,7 +7,6 @@ import Button from '../components/Button';
 import Card from '../components/Card';
 import Skeleton from '../components/Skeleton';
 import PageTransition from '../components/PageTransition';
-import { saveGuestOrder } from '../utils/guestOrders';
 
 const STATUS_LABELS = {
   pending_payment: 'Awaiting Payment',
@@ -28,13 +27,6 @@ export default function OrderSuccess() {
   useEffect(() => {
     ordersApi.getById(id).then(({ data: d }) => {
       setData(d);
-      if (d?.order) {
-        saveGuestOrder({
-          id: d.order.id,
-          order_number: d.order.order_number,
-          phone: d.order.phone,
-        });
-      }
     }).catch(() => {}).finally(() => setLoading(false));
   }, [id]);
 
