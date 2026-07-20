@@ -13,27 +13,9 @@ import { Input, Textarea, Select } from '../components/Input';
 import OrderSummary, { useOrderTotals } from '../components/OrderSummary';
 import PageTransition from '../components/PageTransition';
 import { saveGuestOrder } from '../utils/guestOrders';
+import { loadSavedCheckout, saveCheckoutDetails } from '../utils/checkoutStorage';
+import GuestCheckoutNotice from '../components/GuestCheckoutNotice';
 import { SUPPORT_PHONE_DISPLAY, SUPPORT_PHONE_TEL } from '../constants/support';
-
-const CHECKOUT_STORAGE_KEY = 'book2door-checkout';
-
-function loadSavedCheckout() {
-  try {
-    const saved = localStorage.getItem(CHECKOUT_STORAGE_KEY);
-    if (saved) return JSON.parse(saved);
-  } catch {
-    /* ignore */
-  }
-  return null;
-}
-
-function saveCheckoutDetails(details) {
-  try {
-    localStorage.setItem(CHECKOUT_STORAGE_KEY, JSON.stringify(details));
-  } catch {
-    /* ignore */
-  }
-}
 
 export default function Checkout() {
   const { items, ready, clearCart } = useCart();
@@ -73,27 +55,39 @@ export default function Checkout() {
   }, []);
 
   useEffect(() => {
-    if (!isSignedIn) return;
+    if (isSignedIn) {
+      ordersApi.getCheckoutDetails()
+        .then(({ data }) => {
+          if (!data) return;
 
-    ordersApi.getCheckoutDetails()
-      .then(({ data }) => {
-        if (!data) return;
+          if (data.customer_name) setValue('customer_name', data.customer_name);
+          if (data.college_id) setValue('college_id', data.college_id);
+          if (data.phone) setValue('phone', data.phone);
+          if (data.pickup_location) {
+            setValue('pickup_location', data.pickup_location);
+            setSavedPickup(data.pickup_location);
+            saveCheckoutDetails({
+              customer_name: data.customer_name || '',
+              college_id: data.college_id || '',
+              phone: data.phone || '',
+              pickup_location: data.pickup_location,
+            });
+          }
+        })
+        .catch(() => {});
+      return;
+    }
 
-        if (data.customer_name) setValue('customer_name', data.customer_name);
-        if (data.college_id) setValue('college_id', data.college_id);
-        if (data.phone) setValue('phone', data.phone);
-        if (data.pickup_location) {
-          setValue('pickup_location', data.pickup_location);
-          setSavedPickup(data.pickup_location);
-          saveCheckoutDetails({
-            customer_name: data.customer_name || saved?.customer_name || '',
-            college_id: data.college_id || saved?.college_id || '',
-            phone: data.phone || saved?.phone || '',
-            pickup_location: data.pickup_location,
-          });
-        }
-      })
-      .catch(() => {});
+    const guestSaved = loadSavedCheckout();
+    if (!guestSaved) return;
+
+    if (guestSaved.customer_name) setValue('customer_name', guestSaved.customer_name);
+    if (guestSaved.college_id) setValue('college_id', guestSaved.college_id);
+    if (guestSaved.phone) setValue('phone', guestSaved.phone);
+    if (guestSaved.pickup_location) {
+      setValue('pickup_location', guestSaved.pickup_location);
+      setSavedPickup(guestSaved.pickup_location);
+    }
   }, [isSignedIn, setValue]);
 
   useEffect(() => {
@@ -120,6 +114,11 @@ export default function Checkout() {
   const pickupOptions = showSavedPickupOnly
     ? [savedPickup]
     : pickupLocations;
+  const submitLabel = loading
+    ? 'Creating Order...'
+    : isSignedIn
+      ? 'Continue to Payment'
+      : 'Continue to Payment (Guest)';
 
   const onSubmitOrder = async (data) => {
     if (grandTotal < minOrder) {
@@ -173,7 +172,12 @@ export default function Checkout() {
 
       setStep('payment');
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to create order');
+      const msg = err.response?.data?.error || 'Failed to create order';
+      setError(
+        err.response?.status === 401
+          ? 'Could not create order. Please try again — no sign in is required.'
+          : msg
+      );
     } finally {
       setLoading(false);
     }
@@ -243,13 +247,13 @@ export default function Checkout() {
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
         <h1 className="text-2xl sm:text-3xl font-bold mb-2">Checkout</h1>
-        <p className="text-neutral-500 mb-2 text-sm sm:text-base">
+        <p className="text-neutral-500 mb-4 text-sm sm:text-base">
           {step === 'form' ? 'Enter your details and choose a pickup location' : 'Complete your UPI payment'}
         </p>
-        {step === 'form' && (
-          <p className="text-xs sm:text-sm text-neutral-400 mb-6 sm:mb-8">
-            No account needed. Sign in only if you want your details saved for next time.
-          </p>
+        {step === 'form' && !isSignedIn && (
+          <div className="mb-6 sm:mb-8">
+            <GuestCheckoutNotice />
+          </div>
         )}
 
         {step === 'form' ? (
@@ -336,7 +340,7 @@ export default function Checkout() {
                   className="w-full mt-6"
                   disabled={loading || grandTotal < minOrder}
                 >
-                  {loading ? 'Creating Order...' : 'Continue to Payment'}
+                  {loading ? 'Creating Order...' : submitLabel}
                 </Button>
               </Card>
             </div>

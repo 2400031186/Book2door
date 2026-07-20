@@ -8,6 +8,7 @@ import Button from '../components/Button';
 import Card from '../components/Card';
 import OrderSummary, { useOrderTotals } from '../components/OrderSummary';
 import PageTransition from '../components/PageTransition';
+import GuestCheckoutNotice from '../components/GuestCheckoutNotice';
 
 export default function Cart() {
   const { items, ready, updateQuantity, removeItem, clearCart } = useCart();
@@ -123,11 +124,13 @@ export default function Cart() {
             <Card className="sticky bottom-4 lg:top-24 p-4 sm:p-6">
               <h2 className="font-semibold mb-4">Price Summary</h2>
               <OrderSummary showItems={false} showMinOrderWarning />
-              <p className="text-xs text-neutral-500 mt-3">Checkout without an account.</p>
+              <div className="mt-3">
+                <GuestCheckoutNotice compact />
+              </div>
 
               {canCheckout ? (
                 <Link to="/checkout" className="block mt-4 sm:mt-6">
-                  <Button className="w-full" size="lg">Proceed to Checkout</Button>
+                  <Button className="w-full" size="lg">Checkout as Guest</Button>
                 </Link>
               ) : (
                 <Button className="w-full mt-4 sm:mt-6" size="lg" disabled>

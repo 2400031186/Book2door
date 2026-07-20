@@ -27,7 +27,7 @@ router.post('/upload/quote', quotePdfPrice);
 router.post('/profile/sync', requireAuth, syncProfile);
 
 router.post('/orders', authMiddleware, createOrder);
-router.get('/orders/checkout-details', requireAuth, getCheckoutDetails);
+router.get('/orders/checkout-details', authMiddleware, getCheckoutDetails);
 router.get('/orders/mine', requireAuth, getMyOrders);
 router.get('/orders/:id', getOrderById);
 router.get('/track/:query', trackOrder);
