@@ -1,5 +1,6 @@
 import fs from 'fs/promises';
 import { supabase } from '../config/supabase.js';
+import { getProfile } from '../utils/auth.js';
 import {
   calculateBookLineTotal,
   calculateOrderTotals,
@@ -8,22 +9,42 @@ import {
   getPricingSettings,
 } from '../utils/pricing.js';
 
+export async function getCheckoutDetails(req, res) {
+  try {
+    if (!req.user?.id) {
+      return res.json(null);
+    }
+
+    const profile = await getProfile(req.user.id);
+    if (!profile) {
+      return res.json(null);
+    }
+
+    res.json({
+      customer_name: profile.full_name || '',
+      college_id: profile.college_id || '',
+      phone: profile.phone || '',
+      pickup_location: profile.pickup_location || '',
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
 export async function createOrder(req, res) {
   try {
     const {
       customer_name,
       college_id,
       phone,
-      address,
-      city,
-      pincode,
+      pickup_location,
       order_notes,
       payment_type,
       items,
     } = req.body;
 
-    if (!customer_name || !college_id || !phone || !address || !city || !pincode) {
-      return res.status(400).json({ error: 'All customer fields are required' });
+    if (!customer_name || !college_id || !phone || !pickup_location) {
+      return res.status(400).json({ error: 'Name, college ID, phone, and pickup location are required' });
     }
 
     if (!items?.length) {
@@ -51,7 +72,12 @@ export async function createOrder(req, res) {
           quantity: item.quantity,
           unit_price: parseFloat(book.price),
           line_total: lineTotal,
-          metadata: { title: book.title },
+          metadata: {
+            title: book.title,
+            course_code: book.course_code,
+            year: book.year,
+            semester: book.semester,
+          },
         });
       } else if (item.type === 'pdf') {
         const { data: pdf, error } = await supabase
@@ -94,9 +120,10 @@ export async function createOrder(req, res) {
         customer_name,
         college_id,
         phone,
-        address,
-        city,
-        pincode,
+        pickup_location,
+        address: null,
+        city: null,
+        pincode: null,
         order_notes: order_notes || null,
         subtotal,
         delivery_charge: deliveryCharge,
@@ -123,6 +150,19 @@ export async function createOrder(req, res) {
 
     const { error: itemsError } = await supabase.from('order_items').insert(itemsToInsert);
     if (itemsError) throw itemsError;
+
+    if (req.user?.id) {
+      await supabase.from('profiles').upsert(
+        {
+          id: req.user.id,
+          full_name: customer_name,
+          college_id,
+          phone,
+          pickup_location,
+        },
+        { onConflict: 'id' }
+      );
+    }
 
     await supabase.from('order_status_history').insert({
       order_id: order.id,
@@ -159,7 +199,7 @@ export async function getOrderById(req, res) {
 
     const { data: items } = await supabase
       .from('order_items')
-      .select('*, books(title, subject), pdf_uploads(file_name, print_options)')
+      .select('*, books(title, course_code), pdf_uploads(file_name, print_options)')
       .eq('order_id', order.id);
 
     const { data: payments } = await supabase

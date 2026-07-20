@@ -2,14 +2,16 @@ import { supabase } from '../config/supabase.js';
 
 export async function getBooks(req, res) {
   try {
-    const { branch, semester, subject, search } = req.query;
+    const { year, semester, search, course_code } = req.query;
 
-    let query = supabase.from('books').select('*').eq('is_active', true).order('created_at', { ascending: false });
+    let query = supabase.from('books').select('*').eq('is_active', true).order('course_code', { ascending: true });
 
-    if (branch) query = query.eq('branch', branch);
+    if (year) query = query.eq('year', year);
     if (semester) query = query.eq('semester', semester);
-    if (subject) query = query.ilike('subject', `%${subject}%`);
-    if (search) query = query.or(`title.ilike.%${search}%,subject.ilike.%${search}%`);
+    if (course_code) query = query.ilike('course_code', `%${course_code}%`);
+    if (search) {
+      query = query.or(`title.ilike.%${search}%,course_code.ilike.%${search}%`);
+    }
 
     const { data, error } = await query;
     if (error) throw error;

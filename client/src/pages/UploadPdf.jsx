@@ -14,10 +14,8 @@ import PageTransition from '../components/PageTransition';
 export default function UploadPdf() {
   const { register, handleSubmit, watch, formState: { errors } } = useForm({
     defaultValues: {
-      colorMode: 'bw',
       sideMode: 'single',
       copies: 1,
-      spiralBinding: false,
       notes: '',
     },
   });
@@ -30,10 +28,8 @@ export default function UploadPdf() {
   const { addPdf, itemCount } = useCart();
   const [addedToCart, setAddedToCart] = useState(false);
 
-  const colorMode = watch('colorMode');
   const sideMode = watch('sideMode');
   const copies = watch('copies');
-  const spiralBinding = watch('spiralBinding');
 
   useEffect(() => {
     settingsApi.getPricing().then(({ data }) => setPricing(data.pricing)).catch(() => {});
@@ -77,10 +73,12 @@ export default function UploadPdf() {
     try {
       const formData = new FormData();
       formData.append('pdf', file);
-      formData.append('colorMode', data.colorMode);
+      // Print mode removed from UI: fixed to Black & White (bw)
+      formData.append('colorMode', 'bw');
       formData.append('sideMode', data.sideMode);
       formData.append('copies', data.copies);
-      formData.append('spiralBinding', String(data.spiralBinding));
+      // Binding is now permanent (no checkbox) at ₹75
+      formData.append('spiralBinding', 'true');
       formData.append('notes', data.notes);
 
       const { data: uploadResult } = await uploadApi.uploadPdf(formData);
@@ -92,8 +90,6 @@ export default function UploadPdf() {
     }
   };
 
-  const estimatedPrice = result?.calculated_price;
-
   return (
     <PageTransition>
       <Helmet>
@@ -101,8 +97,10 @@ export default function UploadPdf() {
       </Helmet>
 
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <h1 className="text-3xl font-bold mb-2">Upload PDF for Printing</h1>
-        <p className="text-slate-500 mb-8">Upload your notes or documents and customize your print options.</p>
+        <h1 className="text-2xl sm:text-3xl font-bold mb-2">Upload PDF for Printing</h1>
+        <p className="text-neutral-500 mb-6 sm:mb-8 text-sm sm:text-base">
+          Upload your notes and customize print options. No account needed.
+        </p>
 
         {addedToCart && (
           <Card className="mb-6 border-2 border-green-500/30 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -119,35 +117,33 @@ export default function UploadPdf() {
               onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
               onDragLeave={() => setDragOver(false)}
               onDrop={onDrop}
-              className={`border-2 border-dashed rounded-xl p-10 text-center transition ${
-                dragOver ? 'border-brand-500 bg-brand-50/50 dark:bg-brand-900/20' : 'border-slate-300 dark:border-slate-600'
+              className={`border-2 border-dashed rounded-xl p-8 sm:p-10 text-center transition ${
+                dragOver
+                  ? 'border-[#0A0A0A] dark:border-white bg-neutral-100 dark:bg-neutral-900'
+                  : 'border-neutral-300 dark:border-neutral-600'
               }`}
             >
-              <Upload size={40} className="mx-auto mb-4 text-brand-500" />
+              <Upload size={40} className="mx-auto mb-4 text-neutral-500" />
               {file ? (
-                <div className="flex items-center justify-center gap-2 text-sm">
+                <div className="flex items-center justify-center gap-2 text-sm flex-wrap">
                   <FileText size={16} />
-                  <span>{file.name}</span>
+                  <span className="break-all">{file.name}</span>
                   <button type="button" onClick={() => setFile(null)} className="text-red-500 ml-2">Remove</button>
                 </div>
               ) : (
                 <>
-                  <p className="text-sm text-slate-500 mb-2">Drag & drop your PDF here, or</p>
+                  <p className="text-sm text-neutral-500 mb-2">Drag & drop your PDF here, or</p>
                   <label className="cursor-pointer">
-                    <span className="text-brand-600 font-medium hover:underline">Browse files</span>
+                    <span className="font-medium underline underline-offset-2">Browse files</span>
                     <input type="file" accept=".pdf" className="hidden" onChange={(e) => handleFile(e.target.files[0])} />
                   </label>
                 </>
               )}
-              <p className="text-xs text-slate-400 mt-2">PDF only, max 4.5MB</p>
+              <p className="text-xs text-neutral-400 mt-2">PDF only, max 4.5MB</p>
             </div>
           </Card>
 
           <Card className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Select label="Print Mode" {...register('colorMode')}>
-              <option value="bw">Black & White (₹{pricing?.pdf_bw_per_page || '—'}/page)</option>
-              <option value="color">Color (₹{pricing?.pdf_color_per_page || '—'}/page)</option>
-            </Select>
             <Select label="Sides" {...register('sideMode')}>
               <option value="single">Single Side</option>
               <option value="double">Double Side</option>
@@ -160,13 +156,10 @@ export default function UploadPdf() {
               {...register('copies', { required: true, min: 1, valueAsNumber: true })}
               error={errors.copies?.message}
             />
-            <div className="flex items-center gap-3 pt-6">
-              <input type="checkbox" id="spiral" {...register('spiralBinding')} className="rounded" />
-              <label htmlFor="spiral" className="text-sm">
-                Spiral Binding (+₹{pricing?.spiral_binding || 40})
-              </label>
-            </div>
             <div className="sm:col-span-2">
+              <p className="text-sm text-neutral-600 dark:text-neutral-300 mb-3">
+                Binding is included for every order (+₹75).
+              </p>
               <Textarea label="Notes (optional)" rows={3} {...register('notes')} placeholder="Any special instructions..." />
             </div>
           </Card>
@@ -186,13 +179,12 @@ export default function UploadPdf() {
                 <span className="font-semibold">Price Calculated</span>
               </div>
               <div className="grid grid-cols-2 gap-4 text-sm mb-4">
-                <div><span className="text-slate-500">Pages:</span> {result.page_count}</div>
-                <div><span className="text-slate-500">Mode:</span> {colorMode === 'color' ? 'Color' : 'B&W'}</div>
-                <div><span className="text-slate-500">Sides:</span> {sideMode === 'double' ? 'Double' : 'Single'}</div>
-                <div><span className="text-slate-500">Copies:</span> {copies}</div>
-                {spiralBinding && <div><span className="text-slate-500">Binding:</span> Spiral</div>}
+                <div><span className="text-neutral-500">Pages:</span> {result.page_count}</div>
+                <div><span className="text-neutral-500">Sides:</span> {sideMode === 'double' ? 'Double' : 'Single'}</div>
+                <div><span className="text-neutral-500">Copies:</span> {copies}</div>
+                <div><span className="text-neutral-500">Binding:</span> +₹75</div>
               </div>
-              <div className="text-2xl font-bold gradient-text mb-4">₹{result.calculated_price}</div>
+              <div className="text-2xl font-bold mb-4">₹{result.calculated_price}</div>
               <Button
                 className="w-full"
                 onClick={() => {

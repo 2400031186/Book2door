@@ -64,6 +64,7 @@ export const ordersApi = {
   create: (data) => api.post('/orders', data),
   getById: (id) => api.get(`/orders/${id}`),
   getMine: () => api.get('/orders/mine'),
+  getCheckoutDetails: () => api.get('/orders/checkout-details'),
   track: (query) => api.get(`/track/${encodeURIComponent(query)}`),
 };
 
@@ -75,6 +76,9 @@ export const adminApi = {
   check: () => api.get('/admin/check'),
   dashboard: () => api.get('/admin/dashboard'),
   orders: (params) => api.get('/admin/orders', { params }),
+  orderBook: (params) => api.get('/admin/order-book', { params }),
+  markOrderBookPrinted: (itemId, completed = true) =>
+    api.put(`/admin/order-book/items/${itemId}/print`, { completed }),
   updateOrderStatus: (id, data) => api.put(`/admin/orders/${id}/status`, data),
   deleteOrder: (id) => api.delete(`/admin/orders/${id}`),
   books: () => api.get('/admin/books'),
@@ -86,4 +90,5 @@ export const adminApi = {
   getSettings: () => api.get('/admin/settings'),
   updateSettings: (formData) => api.put('/admin/settings', formData),
   downloadPdf: (id) => api.get(`/admin/pdf/${id}/download`),
+  downloadBookPdf: (id) => api.get(`/admin/books/${id}/pdf`),
 };

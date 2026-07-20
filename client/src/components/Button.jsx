@@ -1,15 +1,18 @@
 const variants = {
-  primary: 'gradient-bg text-white hover:opacity-90 shadow-lg shadow-brand-500/25',
-  secondary: 'glass text-brand-700 dark:text-brand-300 hover:bg-white/80 dark:hover:bg-slate-800/80',
-  outline: 'border-2 border-brand-500 text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/20',
-  danger: 'bg-red-500 text-white hover:bg-red-600',
-  ghost: 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800',
+  primary:
+    'gradient-bg hover:opacity-90 shadow-sm',
+  secondary:
+    'bg-white dark:bg-[#141414] border border-neutral-300 dark:border-neutral-700 text-[#0A0A0A] dark:text-[#F5F5F5] hover:bg-neutral-50 dark:hover:bg-neutral-900',
+  outline:
+    'border-2 border-[#0A0A0A] dark:border-white text-[#0A0A0A] dark:text-white hover:bg-neutral-100 dark:hover:bg-neutral-900',
+  danger: 'bg-red-600 text-white hover:bg-red-700',
+  ghost: 'text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800',
 };
 
 const sizes = {
-  sm: 'px-3 py-1.5 text-sm',
-  md: 'px-5 py-2.5 text-sm',
-  lg: 'px-6 py-3 text-base',
+  sm: 'px-3 py-2 text-sm min-h-9',
+  md: 'px-5 py-2.5 text-sm min-h-11',
+  lg: 'px-6 py-3 text-base min-h-12',
 };
 
 export default function Button({

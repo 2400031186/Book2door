@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { getPublicPricing } from '../controllers/settingsController.js';
 import { getBooks, getBookById } from '../controllers/booksController.js';
 import { uploadPdf, quotePdfPrice } from '../controllers/uploadController.js';
-import { createOrder, getOrderById, getMyOrders, trackOrder } from '../controllers/ordersController.js';
+import { createOrder, getOrderById, getMyOrders, trackOrder, getCheckoutDetails } from '../controllers/ordersController.js';
 import { submitPayment, getPaymentById } from '../controllers/paymentsController.js';
 import { authMiddleware, requireAuth } from '../middleware/auth.js';
 import { uploadPdf as uploadPdfMw, uploadScreenshot } from '../middleware/upload.js';
@@ -24,6 +24,7 @@ router.post('/upload/pdf', uploadLimiter, authMiddleware, (req, res, next) => {
 router.post('/upload/quote', quotePdfPrice);
 
 router.post('/orders', authMiddleware, createOrder);
+router.get('/orders/checkout-details', requireAuth, getCheckoutDetails);
 router.get('/orders/mine', requireAuth, getMyOrders);
 router.get('/orders/:id', getOrderById);
 router.get('/track/:query', trackOrder);

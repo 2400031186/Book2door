@@ -22,12 +22,13 @@ const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
 const AdminOrders = lazy(() => import('./pages/admin/AdminOrders'));
 const AdminBooks = lazy(() => import('./pages/admin/AdminBooks'));
 const AdminPayments = lazy(() => import('./pages/admin/AdminPayments'));
+const AdminOrderBook = lazy(() => import('./pages/admin/AdminOrderBook'));
 const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'));
 
 function PageLoader() {
   return (
     <div className="flex items-center justify-center min-h-[50vh]">
-      <div className="animate-spin w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full" />
+      <div className="animate-spin w-8 h-8 border-2 border-neutral-900 dark:border-white border-t-transparent rounded-full" />
     </div>
   );
 }
@@ -57,6 +58,7 @@ export default function App() {
 
                     <Route path="/admin" element={<AdminLayout />}>
                       <Route index element={<AdminDashboard />} />
+                      <Route path="order-book" element={<AdminOrderBook />} />
                       <Route path="orders" element={<AdminOrders />} />
                       <Route path="books" element={<AdminBooks />} />
                       <Route path="payments" element={<AdminPayments />} />

@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   full_name TEXT,
   phone TEXT,
   college_id TEXT,
+  pickup_location TEXT,
   role TEXT NOT NULL DEFAULT 'customer' CHECK (role IN ('customer', 'admin')),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -13,12 +14,14 @@ CREATE TABLE IF NOT EXISTS profiles (
 -- Books catalog
 CREATE TABLE IF NOT EXISTS books (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  course_code TEXT NOT NULL UNIQUE,
   title TEXT NOT NULL,
-  subject TEXT NOT NULL,
-  branch TEXT NOT NULL,
-  semester TEXT NOT NULL,
+  year TEXT NOT NULL CHECK (year IN ('1', '2', '3', '4')),
+  semester TEXT NOT NULL CHECK (semester IN ('1', '2')),
   price DECIMAL(10, 2) NOT NULL CHECK (price >= 0),
   cover_image_url TEXT,
+  pdf_path TEXT,
+  pdf_file_name TEXT,
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -50,9 +53,10 @@ CREATE TABLE IF NOT EXISTS orders (
   customer_name TEXT NOT NULL,
   college_id TEXT NOT NULL,
   phone TEXT NOT NULL,
-  address TEXT NOT NULL,
-  city TEXT NOT NULL,
-  pincode TEXT NOT NULL,
+  pickup_location TEXT,
+  address TEXT,
+  city TEXT,
+  pincode TEXT,
   order_notes TEXT,
   subtotal DECIMAL(10, 2) NOT NULL DEFAULT 0,
   delivery_charge DECIMAL(10, 2) NOT NULL DEFAULT 0,
@@ -80,7 +84,9 @@ CREATE TABLE IF NOT EXISTS order_items (
   pdf_upload_id UUID REFERENCES pdf_uploads(id) ON DELETE SET NULL,
   quantity INTEGER NOT NULL DEFAULT 1 CHECK (quantity > 0),
   unit_price DECIMAL(10, 2) NOT NULL DEFAULT 0,
-  line_total DECIMAL(10, 2) NOT NULL DEFAULT 0
+  line_total DECIMAL(10, 2) NOT NULL DEFAULT 0,
+  print_completed BOOLEAN NOT NULL DEFAULT FALSE,
+  print_completed_at TIMESTAMPTZ
 );
 
 -- Payments
@@ -165,19 +171,20 @@ INSERT INTO settings (key, value) VALUES
     "delivery_flat": 50,
     "min_order": 100,
     "split_advance_percent": 50,
-    "upi_id": "book2door@upi",
-    "upi_qr_url": ""
+    "upi_id": "book2door@ybl",
+    "upi_qr_url": "/upi-qr.png",
+    "pickup_locations": ["Aravali hostel", "Vindhya hostel", "Kailash residency", "S-block"]
   }'::jsonb)
 ON CONFLICT (key) DO NOTHING;
 
 -- Seed sample books
-INSERT INTO books (title, subject, branch, semester, price, cover_image_url) VALUES
-  ('Engineering Mathematics I', 'Mathematics', 'CSE', '1', 299.00, NULL),
-  ('Data Structures & Algorithms', 'DSA', 'CSE', '3', 449.00, NULL),
-  ('Digital Electronics', 'Electronics', 'ECE', '2', 349.00, NULL),
-  ('Engineering Physics', 'Physics', 'ME', '1', 279.00, NULL),
-  ('Operating Systems', 'OS', 'CSE', '4', 399.00, NULL),
-  ('Signals and Systems', 'Signals', 'ECE', '3', 379.00, NULL),
-  ('Thermodynamics', 'Thermal', 'ME', '3', 329.00, NULL),
-  ('Database Management Systems', 'DBMS', 'CSE', '5', 419.00, NULL)
-ON CONFLICT DO NOTHING;
+INSERT INTO books (course_code, title, year, semester, price, cover_image_url) VALUES
+  ('MA101', 'Engineering Mathematics I', '1', '1', 299.00, NULL),
+  ('CS301', 'Data Structures & Algorithms', '2', '1', 449.00, NULL),
+  ('EC201', 'Digital Electronics', '1', '2', 349.00, NULL),
+  ('PH101', 'Engineering Physics', '1', '1', 279.00, NULL),
+  ('CS401', 'Operating Systems', '2', '2', 399.00, NULL),
+  ('EC301', 'Signals and Systems', '2', '1', 379.00, NULL),
+  ('ME301', 'Thermodynamics', '2', '2', 329.00, NULL),
+  ('CS501', 'Database Management Systems', '3', '1', 419.00, NULL)
+ON CONFLICT (course_code) DO NOTHING;

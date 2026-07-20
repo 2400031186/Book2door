@@ -37,11 +37,11 @@ export const uploadScreenshot = multer({
   fileFilter: imageFilter,
 }).single('screenshot');
 
-export const uploadBookImage = multer({
+export const uploadBookPdf = multer({
   storage,
-  limits: { fileSize: 2 * 1024 * 1024 },
-  fileFilter: imageFilter,
-}).single('cover');
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: pdfFilter,
+}).single('pdf');
 
 export const uploadQr = multer({
   storage,

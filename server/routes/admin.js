@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { adminAuthMiddleware } from '../middleware/adminAuth.js';
-import { uploadBookImage, uploadQr } from '../middleware/upload.js';
+import { uploadBookPdf, uploadQr } from '../middleware/upload.js';
 import {
   getDashboard,
   getAdminOrders,
@@ -14,7 +14,10 @@ import {
   getAdminSettings,
   updateAdminSettings,
   downloadPdf,
+  downloadBookPdf,
   getAllBooksAdmin,
+  getOrderBook,
+  updateOrderBookItemPrint,
   checkAdminRole,
 } from '../controllers/adminController.js';
 
@@ -25,18 +28,20 @@ router.use(adminAuthMiddleware);
 router.get('/check', checkAdminRole);
 router.get('/dashboard', getDashboard);
 router.get('/orders', getAdminOrders);
+router.get('/order-book', getOrderBook);
+router.put('/order-book/items/:id/print', updateOrderBookItemPrint);
 router.put('/orders/:id/status', updateOrderStatus);
 router.delete('/orders/:id', deleteOrder);
 
 router.get('/books', getAllBooksAdmin);
 router.post('/books', (req, res, next) => {
-  uploadBookImage(req, res, (err) => {
+  uploadBookPdf(req, res, (err) => {
     if (err) return res.status(400).json({ error: err.message });
     createBook(req, res);
   });
 });
 router.put('/books/:id', (req, res, next) => {
-  uploadBookImage(req, res, (err) => {
+  uploadBookPdf(req, res, (err) => {
     if (err) return res.status(400).json({ error: err.message });
     updateBook(req, res);
   });
@@ -55,5 +60,6 @@ router.put('/settings', (req, res, next) => {
 });
 
 router.get('/pdf/:id/download', downloadPdf);
+router.get('/books/:id/pdf', downloadBookPdf);
 
 export default router;

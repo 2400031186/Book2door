@@ -37,12 +37,14 @@ function getDefaultSettings() {
     pdf_color_per_page: 3.0,
     single_side_multiplier: 1.0,
     double_side_multiplier: 0.7,
-    spiral_binding: 40,
+    // Binding is fixed permanently at ₹75
+    spiral_binding: 75,
     delivery_flat: 50,
     min_order: 100,
     split_advance_percent: 50,
-    upi_id: 'book2door@upi',
-    upi_qr_url: '',
+    upi_id: 'book2door@ybl',
+    upi_qr_url: '/upi-qr.png',
+    pickup_locations: ['Aravali hostel', 'Vindhya hostel', 'Kailash residency', 'S-block'],
   };
 }
 
@@ -57,7 +59,8 @@ export function calculatePdfPrice(pageCount, options, settings) {
   const rate = colorMode === 'color' ? settings.pdf_color_per_page : settings.pdf_bw_per_page;
   const sideMultiplier =
     sideMode === 'double' ? settings.double_side_multiplier : settings.single_side_multiplier;
-  const bindingCharge = spiralBinding ? settings.spiral_binding : 0;
+  // Permanent binding charge (remove dependency on DB setting).
+  const bindingCharge = spiralBinding ? 75 : 0;
 
   const printCost = pageCount * rate * sideMultiplier * copies;
   return Math.round((printCost + bindingCharge) * 100) / 100;

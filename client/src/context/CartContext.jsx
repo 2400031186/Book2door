@@ -85,10 +85,12 @@ export function CartProvider({ children }) {
       type: 'ADD_BOOK',
       payload: {
         id: book.id,
+        course_code: book.course_code,
         title: book.title,
         price: parseFloat(book.price),
         cover_image_url: book.cover_image_url,
-        subject: book.subject,
+        year: book.year,
+        semester: book.semester,
         quantity,
         cartKey: `book-${book.id}`,
       },

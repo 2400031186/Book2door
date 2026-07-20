@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { SignInButton } from '@clerk/clerk-react';
-import { Search, Package, CheckCircle2, Circle } from 'lucide-react';
+import {
+  Search, Package, CheckCircle2, MapPin, Phone, Copy, ChevronDown, ChevronUp,
+} from 'lucide-react';
 import { ordersApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import Button from '../components/Button';
@@ -10,88 +12,206 @@ import Card from '../components/Card';
 import { Input } from '../components/Input';
 import PageTransition from '../components/PageTransition';
 
-const STATUS_STEPS = ['received', 'printing', 'packing', 'out_for_delivery', 'delivered'];
-const STATUS_LABELS = {
-  pending_payment: 'Pending Payment',
-  payment_review: 'Payment Review',
-  received: 'Order Received',
-  printing: 'Printing',
-  packing: 'Packing',
-  out_for_delivery: 'Out for Delivery',
-  delivered: 'Delivered',
-  cancelled: 'Cancelled',
-};
+const TRACK_STEPS = ['Order Placed', 'Payment Received', 'Done'];
 
-function Timeline({ history, currentStatus }) {
-  const relevantHistory = history?.filter((h) =>
-    STATUS_STEPS.includes(h.status) || h.status === 'payment_review' || h.status === 'pending_payment'
-  ) || [];
+function getTrackingStepIndex(status) {
+  if (status === 'delivered') return 2;
+  if (['received', 'printing', 'packing', 'out_for_delivery'].includes(status)) return 1;
+  return 0;
+}
 
-  const currentIdx = STATUS_STEPS.indexOf(currentStatus);
+function getCustomerStatusLabel(status) {
+  if (status === 'cancelled') return 'Cancelled';
+  if (status === 'delivered') return 'Done';
+  if (['received', 'printing', 'packing', 'out_for_delivery'].includes(status)) return 'Payment Received';
+  if (status === 'payment_review') return 'Payment Review';
+  if (status === 'pending_payment') return 'Order Placed';
+  return status?.replace(/_/g, ' ') || 'Unknown';
+}
+
+function getStatusMessage(status, pickupLocation) {
+  if (status === 'pending_payment') return 'Complete UPI payment to continue.';
+  if (status === 'payment_review') return 'We are verifying your payment. This usually takes a short while.';
+  if (status === 'received' || status === 'printing' || status === 'packing') {
+    return 'Payment confirmed. We are preparing your order.';
+  }
+  if (status === 'out_for_delivery') {
+    return pickupLocation
+      ? `Ready for pickup at ${pickupLocation}.`
+      : 'Your order is ready for pickup.';
+  }
+  if (status === 'delivered') return 'Order complete. Thank you for ordering with Book2Door.';
+  return null;
+}
+
+function mapHistoryLabel(status) {
+  if (status === 'delivered') return 'Done';
+  if (status === 'received') return 'Payment Received';
+  if (['printing', 'packing'].includes(status)) return 'Preparing Order';
+  if (status === 'out_for_delivery') return 'Ready for Pickup';
+  if (status === 'payment_review') return 'Payment Under Review';
+  if (status === 'pending_payment') return 'Order Placed';
+  if (status === 'cancelled') return 'Cancelled';
+  return status?.replace(/_/g, ' ') || status;
+}
+
+function statusBadgeClass(status) {
+  if (status === 'delivered') return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
+  if (status === 'cancelled') return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
+  if (status === 'pending_payment' || status === 'payment_review') {
+    return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400';
+  }
+  return 'bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200';
+}
+
+function ProgressSteps({ status, pickupLocation }) {
+  if (status === 'cancelled') {
+    return (
+      <p className="text-sm text-red-600 font-medium py-2">This order was cancelled.</p>
+    );
+  }
+
+  const idx = getTrackingStepIndex(status);
+  const message = getStatusMessage(status, pickupLocation);
 
   return (
-    <div className="relative pl-8 space-y-6">
-      <div className="absolute left-3 top-2 bottom-2 w-0.5 bg-slate-200 dark:bg-slate-700" />
-      {relevantHistory.map((entry, i) => {
-        const stepIdx = STATUS_STEPS.indexOf(entry.status);
-        const isComplete = stepIdx >= 0 && stepIdx <= currentIdx;
-        const isCurrent = entry.status === currentStatus;
+    <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50 p-4 sm:p-5">
+      <div className="flex items-center justify-between gap-2 mb-4">
+        {TRACK_STEPS.map((label, i) => {
+          const done = i <= idx;
+          const current = i === idx;
+          return (
+            <div key={label} className="flex-1 flex flex-col items-center min-w-0">
+              <div
+                className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shrink-0 text-sm font-bold mb-2 ${
+                  done
+                    ? 'gradient-bg'
+                    : 'bg-neutral-200 dark:bg-neutral-700 text-neutral-400'
+                } ${current ? 'ring-2 ring-offset-2 ring-neutral-400 dark:ring-offset-[#141414]' : ''}`}
+              >
+                {done ? <CheckCircle2 size={18} /> : i + 1}
+              </div>
+              <span className={`text-xs sm:text-sm text-center leading-tight ${current ? 'font-bold' : done ? 'text-neutral-700 dark:text-neutral-300' : 'text-neutral-400'}`}>
+                {label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
 
-        return (
-          <div key={entry.id || i} className="relative">
-            <div className={`absolute -left-5 w-6 h-6 rounded-full flex items-center justify-center ${
-              isComplete ? 'gradient-bg' : 'bg-slate-200 dark:bg-slate-700'
-            }`}>
-              {isComplete ? (
-                <CheckCircle2 size={14} className="text-white" />
-              ) : (
-                <Circle size={14} className="text-slate-400" />
-              )}
-            </div>
-            <div>
-              <p className={`font-medium ${isCurrent ? 'text-brand-600' : ''}`}>
-                {STATUS_LABELS[entry.status] || entry.status}
-              </p>
-              {entry.note && <p className="text-sm text-slate-500">{entry.note}</p>}
-              <p className="text-xs text-slate-400 mt-1">
-                {new Date(entry.created_at).toLocaleString()}
-              </p>
-            </div>
-          </div>
-        );
-      })}
+      <div className="relative h-1.5 rounded-full bg-neutral-200 dark:bg-neutral-700 mb-3 overflow-hidden">
+        <div
+          className="absolute inset-y-0 left-0 rounded-full gradient-bg transition-all duration-500"
+          style={{ width: `${(idx / (TRACK_STEPS.length - 1)) * 100}%` }}
+        />
+      </div>
+
+      {message && (
+        <p className="text-sm text-neutral-600 dark:text-neutral-300 text-center">{message}</p>
+      )}
     </div>
   );
 }
 
-function OrderCard({ order, history, payments }) {
+function OrderCard({ order, history, payments, defaultOpen = false }) {
+  const [open, setOpen] = useState(defaultOpen);
+  const [copied, setCopied] = useState(false);
+  const payment = payments?.[0];
+
+  const copyOrderId = () => {
+    navigator.clipboard.writeText(order.order_number);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
   return (
-    <Card className="mb-6">
-      <div className="flex items-start justify-between gap-3 mb-6">
-        <div className="flex items-center gap-3 min-w-0">
-          <Package size={24} className="text-brand-500 shrink-0" />
-          <div className="min-w-0">
-            <p className="font-mono font-semibold truncate">{order.order_number}</p>
-            <p className="text-sm text-slate-500">
-              {order.customer_name} · ₹{order.grand_total} · {STATUS_LABELS[order.status] || order.status}
-            </p>
-            <p className="text-xs text-slate-400 mt-1">
-              {new Date(order.created_at).toLocaleString()}
-            </p>
+    <Card className="overflow-hidden p-0 mb-4">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full text-left p-4 sm:p-5 flex items-start gap-3 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition"
+      >
+        <div className="w-11 h-11 rounded-xl bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 flex items-center justify-center shrink-0">
+          <Package size={20} className="text-neutral-600 dark:text-neutral-300" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-2 mb-1">
+            <span className="font-mono font-bold text-sm sm:text-base">{order.order_number}</span>
+            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusBadgeClass(order.status)}`}>
+              {getCustomerStatusLabel(order.status)}
+            </span>
+          </div>
+          <p className="text-sm text-neutral-500">
+            ₹{Number(order.grand_total).toFixed(2)}
+            {order.pickup_location ? ` · ${order.pickup_location}` : ''}
+          </p>
+          <p className="text-xs text-neutral-400 mt-0.5">
+            {new Date(order.created_at).toLocaleDateString('en-IN', {
+              day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
+            })}
+          </p>
+        </div>
+        <div className="shrink-0 text-neutral-400 mt-1">
+          {open ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+        </div>
+      </button>
+
+      {open && (
+        <div className="px-4 sm:px-5 pb-5 space-y-5 border-t border-neutral-200 dark:border-neutral-800 pt-4">
+          <ProgressSteps status={order.status} pickupLocation={order.pickup_location} />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+            <div className="rounded-xl bg-neutral-50 dark:bg-neutral-900 p-3">
+              <p className="text-xs text-neutral-500 mb-0.5">Customer</p>
+              <p className="font-medium">{order.customer_name}</p>
+              <p className="text-neutral-500 flex items-center gap-1 mt-1">
+                <Phone size={12} /> {order.phone}
+              </p>
+            </div>
+            <div className="rounded-xl bg-neutral-50 dark:bg-neutral-900 p-3">
+              <p className="text-xs text-neutral-500 mb-0.5">Pickup</p>
+              <p className="font-medium flex items-center gap-1">
+                <MapPin size={14} className="shrink-0" />
+                {order.pickup_location || '—'}
+              </p>
+              {payment && (
+                <p className="text-neutral-500 mt-1 capitalize">
+                  Payment: {payment.status}
+                  {order.payment_type === 'split' ? ' · Partial' : ' · Full'}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {history?.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-2">Updates</p>
+              <ul className="space-y-2">
+                {[...history].reverse().slice(0, 5).map((h, i) => (
+                  <li key={h.id || i} className="text-sm flex gap-2">
+                    <span className="text-neutral-400 text-xs whitespace-nowrap pt-0.5">
+                      {new Date(h.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                    </span>
+                    <span>
+                      <span className="font-medium">{mapHistoryLabel(h.status)}</span>
+                      {h.note ? <span className="text-neutral-500"> — {h.note}</span> : null}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button type="button" variant="secondary" size="sm" className="w-full sm:w-auto" onClick={copyOrderId}>
+              <Copy size={14} /> {copied ? 'Copied!' : 'Copy Order ID'}
+            </Button>
+            <Link to={`/order/${order.id}`} className="w-full sm:w-auto">
+              <Button size="sm" className="w-full">View Full Details</Button>
+            </Link>
           </div>
         </div>
-        <Link to={`/order/${order.id}`} className="text-sm text-brand-600 hover:underline shrink-0">
-          Details
-        </Link>
-      </div>
-
-      {payments?.[0] && (
-        <div className="mb-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-sm">
-          Payment: <span className="capitalize font-medium">{payments[0].status}</span>
-        </div>
       )}
-
-      <Timeline history={history} currentStatus={order.status} />
     </Card>
   );
 }
@@ -124,7 +244,7 @@ export default function TrackOrder() {
             (err.response?.status === 401
               ? 'Please sign in again to view your orders'
               : err.message?.includes('Network')
-                ? 'Cannot reach the API. Check Vercel env vars and redeploy.'
+                ? 'Cannot reach the API. Check connection and try again.'
                 : 'Failed to load your orders');
           setError(msg);
         })
@@ -140,6 +260,7 @@ export default function TrackOrder() {
     const initial = searchParams.get('query');
     if (!initial?.trim() || isSignedIn || authLoading) return;
 
+    setQuery(initial.trim());
     setLoading(true);
     setError('');
     ordersApi
@@ -165,66 +286,117 @@ export default function TrackOrder() {
       const { data } = await ordersApi.track(query.trim());
       setResults(Array.isArray(data) ? data : [data]);
     } catch (err) {
-      setError(err.response?.data?.error || 'No orders found');
+      setError(err.response?.data?.error || 'No orders found. Check your order ID or phone number.');
     } finally {
       setLoading(false);
     }
   };
 
+  const list = Array.isArray(results) ? results : [];
+  const showGuestEmpty = !isSignedIn && !loading && !searched && !list.length;
+  const showNoResults = searched && !loading && list.length === 0 && !error;
+
   return (
     <PageTransition>
       <Helmet><title>Track Order — Book2Door</title></Helmet>
 
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <h1 className="text-3xl font-bold mb-2">Track Your Order</h1>
-        <p className="text-slate-500 mb-8">
-          {isSignedIn
-            ? 'Your orders are shown below. You can also search by order ID or phone.'
-            : 'Sign in to see your orders, or search by order ID / phone number.'}
-        </p>
+      <div className="max-w-xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        <div className="text-center mb-8">
+          <div className="w-12 h-12 rounded-2xl gradient-bg flex items-center justify-center mx-auto mb-4">
+            <Package size={22} className="text-inherit" />
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2">Track Order</h1>
+          <p className="text-neutral-500 text-sm sm:text-base max-w-sm mx-auto">
+            Enter your order ID or 10-digit phone number. No login needed.
+          </p>
+        </div>
 
-        {!authLoading && !isSignedIn && (
-          <Card className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <p className="text-sm text-slate-600 dark:text-slate-300">
-              Sign in to view all your orders automatically.
-            </p>
-            <SignInButton mode="modal">
-              <Button size="sm">Sign In</Button>
-            </SignInButton>
-          </Card>
-        )}
+        <Card className="p-4 sm:p-5 mb-6">
+          <form onSubmit={handleSearch} className="space-y-3">
+            <Input
+              label="Order ID or Phone"
+              placeholder="e.g. B2D-20260720-AB12 or 9876543210"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              autoComplete="tel"
+            />
+            <Button type="submit" disabled={loading || !query.trim()} className="w-full" size="lg">
+              <Search size={18} />
+              {loading ? 'Searching...' : 'Find My Order'}
+            </Button>
+          </form>
+          <p className="text-xs text-neutral-400 mt-3 text-center">
+            Order ID is on your confirmation page / SMS after payment.
+          </p>
+        </Card>
 
-        <form onSubmit={handleSearch} className="flex gap-3 mb-8">
-          <Input
-            placeholder="Order ID (B2D-...) or Phone Number"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="flex-1"
-          />
-          <Button type="submit" disabled={loading}>
-            <Search size={16} /> {loading ? 'Searching...' : 'Track'}
-          </Button>
-        </form>
-
-        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-
-        {loading && !results && (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full" />
+        {error && (
+          <div className="mb-6 rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-700 dark:text-red-300">
+            {error}
           </div>
         )}
 
-        {!loading && isSignedIn && results?.length === 0 && !searched && (
-          <Card className="text-center py-10">
-            <Package size={40} className="mx-auto mb-4 text-slate-300" />
-            <p className="font-medium mb-1">No orders yet</p>
-            <p className="text-sm text-slate-500 mb-4">Place an order and it will show up here.</p>
-            <Link to="/books"><Button>Browse Books</Button></Link>
+        {loading && list.length === 0 && (
+          <div className="flex flex-col items-center py-12 gap-3">
+            <div className="animate-spin w-8 h-8 border-2 border-neutral-900 dark:border-white border-t-transparent rounded-full" />
+            <p className="text-sm text-neutral-500">Looking up your order…</p>
+          </div>
+        )}
+
+        {showGuestEmpty && (
+          <div className="text-center py-6 space-y-4">
+            <p className="text-sm text-neutral-500">
+              Have an account? Sign in to see all your orders in one place.
+            </p>
+            <SignInButton mode="modal">
+              <Button variant="secondary" size="sm">Sign In</Button>
+            </SignInButton>
+          </div>
+        )}
+
+        {!loading && isSignedIn && list.length === 0 && !searched && !error && (
+          <Card className="text-center py-12 p-6">
+            <Package size={40} className="mx-auto mb-3 text-neutral-300" />
+            <p className="font-semibold mb-1">No orders yet</p>
+            <p className="text-sm text-neutral-500 mb-5">Place an order and track it here.</p>
+            <div className="flex flex-col sm:flex-row gap-2 justify-center">
+              <Link to="/books"><Button>Browse Books</Button></Link>
+              <Link to="/upload"><Button variant="secondary">Upload PDF</Button></Link>
+            </div>
           </Card>
         )}
 
-        {results?.map(({ order, history, payments }) => (
-          <OrderCard key={order.id} order={order} history={history} payments={payments} />
+        {showNoResults && (
+          <Card className="text-center py-10 p-6">
+            <p className="font-semibold mb-1">No orders found</p>
+            <p className="text-sm text-neutral-500">
+              Double-check the order ID (starts with B2D-) or the phone used at checkout.
+            </p>
+          </Card>
+        )}
+
+        {isSignedIn && list.length > 0 && !searched && (
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">
+              Your orders ({list.length})
+            </h2>
+          </div>
+        )}
+
+        {searched && list.length > 0 && (
+          <p className="text-sm text-neutral-500 mb-3">
+            {list.length} result{list.length !== 1 ? 's' : ''} found
+          </p>
+        )}
+
+        {list.map(({ order, history, payments }, i) => (
+          <OrderCard
+            key={order.id}
+            order={order}
+            history={history}
+            payments={payments}
+            defaultOpen={list.length === 1 || i === 0}
+          />
         ))}
       </div>
     </PageTransition>

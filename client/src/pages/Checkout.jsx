@@ -5,18 +5,49 @@ import { Helmet } from 'react-helmet-async';
 import { MessageCircle, Phone, Send, QrCode, Upload, CheckCircle, Copy } from 'lucide-react';
 import { ordersApi, paymentsApi, settingsApi } from '../services/api';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import usePricing from '../hooks/usePricing';
 import Button from '../components/Button';
 import Card from '../components/Card';
-import { Input, Textarea } from '../components/Input';
+import { Input, Textarea, Select } from '../components/Input';
 import OrderSummary, { useOrderTotals } from '../components/OrderSummary';
 import PageTransition from '../components/PageTransition';
 
+const CHECKOUT_STORAGE_KEY = 'book2door-checkout';
+
+function loadSavedCheckout() {
+  try {
+    const saved = localStorage.getItem(CHECKOUT_STORAGE_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
+function saveCheckoutDetails(details) {
+  try {
+    localStorage.setItem(CHECKOUT_STORAGE_KEY, JSON.stringify(details));
+  } catch {
+    /* ignore */
+  }
+}
+
 export default function Checkout() {
   const { items, ready, clearCart } = useCart();
+  const { isSignedIn } = useAuth();
   const { splitPercent, minOrder } = usePricing();
   const navigate = useNavigate();
-  const { register, handleSubmit, formState: { errors } } = useForm();
+  const saved = loadSavedCheckout();
+  const { register, handleSubmit, setValue, formState: { errors } } = useForm({
+    defaultValues: {
+      customer_name: saved?.customer_name || '',
+      college_id: saved?.college_id || '',
+      phone: saved?.phone || '',
+      pickup_location: saved?.pickup_location || '',
+      order_notes: '',
+    },
+  });
   const [paymentType, setPaymentType] = useState('split');
   const [step, setStep] = useState('form');
   const [orderData, setOrderData] = useState(null);
@@ -27,8 +58,47 @@ export default function Checkout() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
+  const [pickupLocations, setPickupLocations] = useState([]);
+  const [savedPickup, setSavedPickup] = useState(saved?.pickup_location || '');
+  const [changingPickup, setChangingPickup] = useState(false);
 
   const { grandTotal, advanceAmount, codAmount } = useOrderTotals(paymentType);
+
+  useEffect(() => {
+    settingsApi.getPricing().then(({ data }) => {
+      setPickupLocations(data.pickup_locations || []);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!isSignedIn) return;
+
+    ordersApi.getCheckoutDetails()
+      .then(({ data }) => {
+        if (!data) return;
+
+        if (data.customer_name) setValue('customer_name', data.customer_name);
+        if (data.college_id) setValue('college_id', data.college_id);
+        if (data.phone) setValue('phone', data.phone);
+        if (data.pickup_location) {
+          setValue('pickup_location', data.pickup_location);
+          setSavedPickup(data.pickup_location);
+          saveCheckoutDetails({
+            customer_name: data.customer_name || saved?.customer_name || '',
+            college_id: data.college_id || saved?.college_id || '',
+            phone: data.phone || saved?.phone || '',
+            pickup_location: data.pickup_location,
+          });
+        }
+      })
+      .catch(() => {});
+  }, [isSignedIn, setValue]);
+
+  useEffect(() => {
+    if (savedPickup && !changingPickup) {
+      setValue('pickup_location', savedPickup);
+    }
+  }, [savedPickup, changingPickup, setValue]);
 
   useEffect(() => {
     if (ready && items.length === 0 && step === 'form') {
@@ -39,10 +109,15 @@ export default function Checkout() {
   if (!ready) {
     return (
       <div className="flex items-center justify-center min-h-[40vh]">
-        <div className="animate-spin w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full" />
+        <div className="animate-spin w-8 h-8 border-2 border-neutral-900 dark:border-white border-t-transparent rounded-full" />
       </div>
     );
   }
+
+  const showSavedPickupOnly = savedPickup && !changingPickup;
+  const pickupOptions = showSavedPickupOnly
+    ? [savedPickup]
+    : pickupLocations;
 
   const onSubmitOrder = async (data) => {
     if (grandTotal < minOrder) {
@@ -66,6 +141,15 @@ export default function Checkout() {
 
       const { data: result } = await ordersApi.create(payload);
       setOrderData(result);
+
+      saveCheckoutDetails({
+        customer_name: data.customer_name,
+        college_id: data.college_id,
+        phone: data.phone,
+        pickup_location: data.pickup_location,
+      });
+      setSavedPickup(data.pickup_location);
+      setChangingPickup(false);
 
       const pricingRes = await settingsApi.getPricing();
       const amountDue =
@@ -148,25 +232,59 @@ export default function Checkout() {
     <PageTransition>
       <Helmet><title>Checkout — Book2Door</title></Helmet>
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <h1 className="text-3xl font-bold mb-2">Checkout</h1>
-        <p className="text-slate-500 mb-8">
-          {step === 'form' ? 'Enter delivery details and choose payment method' : 'Complete your UPI payment'}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-2">Checkout</h1>
+        <p className="text-neutral-500 mb-2 text-sm sm:text-base">
+          {step === 'form' ? 'Enter your details and choose a pickup location' : 'Complete your UPI payment'}
         </p>
+        {step === 'form' && (
+          <p className="text-xs sm:text-sm text-neutral-400 mb-6 sm:mb-8">
+            No account needed. Sign in only if you want your details saved for next time.
+          </p>
+        )}
 
         {step === 'form' ? (
-          <form onSubmit={handleSubmit(onSubmitOrder)} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-6">
-              <Card>
-                <h2 className="font-semibold mb-4">Delivery Details</h2>
+          <form onSubmit={handleSubmit(onSubmitOrder)} className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+            <div className="lg:col-span-2 space-y-4 sm:space-y-6">
+              <Card className="p-4 sm:p-6">
+                <h2 className="font-semibold mb-4">Pickup Details</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Input label="Name *" {...register('customer_name', { required: 'Name is required' })} error={errors.customer_name?.message} />
                   <Input label="College ID *" {...register('college_id', { required: 'College ID is required' })} error={errors.college_id?.message} />
                   <Input label="Phone *" {...register('phone', { required: 'Phone is required', pattern: { value: /^\d{10}$/, message: 'Enter 10-digit phone' } })} error={errors.phone?.message} />
-                  <Input label="City *" {...register('city', { required: 'City is required' })} error={errors.city?.message} />
-                  <Input label="Pincode *" {...register('pincode', { required: 'Pincode is required' })} error={errors.pincode?.message} />
                   <div className="sm:col-span-2">
-                    <Input label="Address *" {...register('address', { required: 'Address is required' })} error={errors.address?.message} />
+                    {showSavedPickupOnly ? (
+                      <div className="space-y-1.5">
+                        <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                          Pickup Location *
+                        </label>
+                        <div className="flex items-center gap-3 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-[#141414] px-4 py-2.5 min-h-11">
+                          <span className="text-sm flex-1">{savedPickup}</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setChangingPickup(true);
+                              setValue('pickup_location', '');
+                            }}
+                            className="text-xs font-medium underline underline-offset-2"
+                          >
+                            Change
+                          </button>
+                        </div>
+                        <input type="hidden" {...register('pickup_location', { required: 'Pickup location is required' })} />
+                      </div>
+                    ) : (
+                      <Select
+                        label="Pickup Location *"
+                        {...register('pickup_location', { required: 'Pickup location is required' })}
+                        error={errors.pickup_location?.message}
+                      >
+                        <option value="">Select pickup location</option>
+                        {pickupOptions.map((loc) => (
+                          <option key={loc} value={loc}>{loc}</option>
+                        ))}
+                      </Select>
+                    )}
                   </div>
                   <div className="sm:col-span-2">
                     <Textarea label="Order Notes" rows={2} {...register('order_notes')} />
@@ -174,24 +292,24 @@ export default function Checkout() {
                 </div>
               </Card>
 
-              <Card>
+              <Card className="p-4 sm:p-6">
                 <h2 className="font-semibold mb-4">Payment Method</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <button
                     type="button"
                     onClick={() => setPaymentType('full')}
-                    className={`p-4 rounded-xl border-2 text-left transition ${paymentType === 'full' ? 'border-brand-500 bg-brand-50/50 dark:bg-brand-900/20' : 'border-slate-200 dark:border-slate-700'}`}
+                    className={`p-4 rounded-xl border-2 text-left transition min-h-11 ${paymentType === 'full' ? 'border-[#0A0A0A] dark:border-white bg-neutral-50 dark:bg-neutral-900' : 'border-neutral-200 dark:border-neutral-700'}`}
                   >
                     <div className="font-semibold">Full Payment</div>
-                    <div className="text-sm text-slate-500">Pay ₹{grandTotal.toFixed(2)} online now</div>
+                    <div className="text-sm text-neutral-500">Pay ₹{grandTotal.toFixed(2)} online now</div>
                   </button>
                   <button
                     type="button"
                     onClick={() => setPaymentType('split')}
-                    className={`p-4 rounded-xl border-2 text-left transition ${paymentType === 'split' ? 'border-brand-500 bg-brand-50/50 dark:bg-brand-900/20' : 'border-slate-200 dark:border-slate-700'}`}
+                    className={`p-4 rounded-xl border-2 text-left transition min-h-11 ${paymentType === 'split' ? 'border-[#0A0A0A] dark:border-white bg-neutral-50 dark:bg-neutral-900' : 'border-neutral-200 dark:border-neutral-700'}`}
                   >
                     <div className="font-semibold">Split Payment</div>
-                    <div className="text-sm text-slate-500">
+                    <div className="text-sm text-neutral-500">
                       ₹{advanceAmount.toFixed(2)} now + ₹{codAmount.toFixed(2)} COD
                     </div>
                   </button>
@@ -200,7 +318,7 @@ export default function Checkout() {
             </div>
 
             <div>
-              <Card className="sticky top-24">
+              <Card className="sticky bottom-4 lg:top-24 p-4 sm:p-6">
                 <h2 className="font-semibold mb-4">Order Summary</h2>
                 <OrderSummary paymentType={paymentType} splitPercent={splitPercent} showMinOrderWarning />
                 {error && <p className="text-red-500 text-sm mt-4">{error}</p>}
@@ -237,25 +355,25 @@ export default function Checkout() {
                   <div>
                     <p className="text-sm text-slate-500">UPI ID</p>
                     <div className="flex items-center justify-center gap-2">
-                      <p className="font-mono font-semibold">{upiInfo?.upi_id || 'book2door@upi'}</p>
-                      <button type="button" onClick={copyUpi} className="p-1 hover:text-brand-600" title="Copy UPI ID">
+                      <p className="font-mono font-semibold">{upiInfo?.upi_id || 'book2door@ybl'}</p>
+                      <button type="button" onClick={copyUpi} className="p-1 hover:opacity-70" title="Copy UPI ID">
                         <Copy size={16} />
                       </button>
                     </div>
                     {copied && <p className="text-xs text-green-600 mt-1">Copied!</p>}
                   </div>
                   <div>
-                    <p className="text-sm text-slate-500">
+                    <p className="text-sm text-neutral-500">
                       {upiInfo?.paymentType === 'split' ? 'Advance Amount to Pay' : 'Amount to Pay'}
                     </p>
-                    <p className="text-3xl font-bold gradient-text">₹{Number(upiInfo?.amount || 0).toFixed(2)}</p>
+                    <p className="text-3xl font-bold">₹{Number(upiInfo?.amount || 0).toFixed(2)}</p>
                   </div>
                   {upiInfo?.paymentType === 'split' && orderData?.order && (
-                    <p className="text-sm text-slate-500">
+                    <p className="text-sm text-neutral-500">
                       Remaining ₹{Number(orderData.order.cod_amount).toFixed(2)} due on delivery
                     </p>
                   )}
-                  <p className="text-xs text-slate-500">Scan QR → Pay → Upload screenshot below</p>
+                  <p className="text-xs text-neutral-500">Scan QR → Pay → Upload screenshot below</p>
                 </div>
               </Card>
 
@@ -264,7 +382,7 @@ export default function Checkout() {
                   <Upload size={20} /> Upload Payment Screenshot
                 </h2>
                 <div className="space-y-4">
-                  <label className="block border-2 border-dashed rounded-xl p-6 text-center cursor-pointer hover:border-brand-500 transition">
+                  <label className="block border-2 border-dashed rounded-xl p-6 text-center cursor-pointer hover:border-[#0A0A0A] dark:hover:border-white transition border-neutral-300 dark:border-neutral-600">
                     <input type="file" accept=".jpg,.jpeg,.png" className="hidden" onChange={(e) => handleScreenshot(e.target.files[0])} />
                     {preview ? (
                       <img src={preview} alt="Preview" className="mx-auto max-h-40 rounded-lg" />

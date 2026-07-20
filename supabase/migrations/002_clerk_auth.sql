@@ -12,6 +12,7 @@ CREATE TABLE profiles (
   email TEXT,
   phone TEXT,
   college_id TEXT,
+  pickup_location TEXT,
   role TEXT NOT NULL DEFAULT 'customer' CHECK (role IN ('customer', 'admin')),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

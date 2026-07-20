@@ -12,8 +12,13 @@ export default function AdminSettings() {
   const [qrFile, setQrFile] = useState(null);
   const [message, setMessage] = useState('');
 
+  const [pickupLocationsText, setPickupLocationsText] = useState('');
+
   useEffect(() => {
-    adminApi.getSettings().then(({ data }) => setSettings(data)).finally(() => setLoading(false));
+    adminApi.getSettings().then(({ data }) => {
+      setSettings(data);
+      setPickupLocationsText((data.pickup_locations || []).join('\n'));
+    }).finally(() => setLoading(false));
   }, []);
 
   const handleChange = (key, value) => {
@@ -26,12 +31,14 @@ export default function AdminSettings() {
     try {
       const fd = new FormData();
       Object.entries(settings).forEach(([k, v]) => {
-        if (k !== 'upi_qr_url') fd.append(k, v);
+        if (k !== 'upi_qr_url' && k !== 'pickup_locations') fd.append(k, v);
       });
+      fd.append('pickup_locations', pickupLocationsText);
       if (qrFile) fd.append('qr', qrFile);
 
       const { data } = await adminApi.updateSettings(fd);
       setSettings(data);
+      setPickupLocationsText((data.pickup_locations || []).join('\n'));
       setMessage('Settings saved successfully!');
     } catch {
       setMessage('Failed to save settings.');
@@ -47,7 +54,7 @@ export default function AdminSettings() {
     { key: 'pdf_color_per_page', label: 'Color Price per Page (₹)' },
     { key: 'single_side_multiplier', label: 'Single Side Multiplier' },
     { key: 'double_side_multiplier', label: 'Double Side Multiplier' },
-    { key: 'spiral_binding', label: 'Spiral Binding Charge (₹)' },
+    { key: 'spiral_binding', label: 'Binding Charge (₹)' },
     { key: 'delivery_flat', label: 'Delivery Charge (₹)' },
     { key: 'min_order', label: 'Minimum Order (₹)' },
     { key: 'split_advance_percent', label: 'Split Advance (%)' },
@@ -70,6 +77,17 @@ export default function AdminSettings() {
               onChange={(e) => handleChange(key, e.target.value)}
             />
           ))}
+        </div>
+
+        <div className="mt-4">
+          <label className="block text-sm font-medium mb-1">Pickup Locations (one per line)</label>
+          <textarea
+            rows={5}
+            value={pickupLocationsText}
+            onChange={(e) => setPickupLocationsText(e.target.value)}
+            className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 px-4 py-2.5 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 resize-none"
+            placeholder={'Aravali hostel\nVindhya hostel\nKailash residency\nS-block'}
+          />
         </div>
 
         <div className="mt-4 space-y-3">

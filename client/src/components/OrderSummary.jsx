@@ -27,16 +27,16 @@ export default function OrderSummary({
   return (
     <div className={className}>
       {showItems && items.length > 0 && (
-        <div className="space-y-3 mb-4 pb-4 border-b border-slate-200 dark:border-slate-700">
+        <div className="space-y-3 mb-4 pb-4 border-b border-neutral-200 dark:border-neutral-800">
           {items.map((item) => (
             <div key={item.cartKey} className="flex justify-between gap-3 text-sm">
               <div className="min-w-0 flex-1">
                 <p className="font-medium truncate">
                   {item.type === 'book' ? item.title : item.file_name}
                 </p>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-neutral-500">
                   {item.type === 'book'
-                    ? `Book · Qty ${item.quantity}`
+                    ? `${item.course_code || 'Book'} · Qty ${item.quantity}`
                     : `PDF Print · ${item.page_count || '—'} pages`}
                 </p>
               </div>
@@ -48,25 +48,25 @@ export default function OrderSummary({
 
       <div className="space-y-2 text-sm">
         <div className="flex justify-between">
-          <span className="text-slate-500">Subtotal</span>
+          <span className="text-neutral-500">Subtotal</span>
           <span>₹{subtotal.toFixed(2)}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-slate-500">Delivery</span>
+          <span className="text-neutral-500">Delivery</span>
           <span>₹{delivery.toFixed(2)}</span>
         </div>
-        <div className="flex justify-between font-bold text-lg border-t border-slate-200 dark:border-slate-700 pt-2">
+        <div className="flex justify-between font-bold text-lg border-t border-neutral-200 dark:border-neutral-800 pt-2">
           <span>Grand Total</span>
-          <span className="gradient-text">₹{grandTotal.toFixed(2)}</span>
+          <span>₹{grandTotal.toFixed(2)}</span>
         </div>
 
         {paymentType === 'split' && (
           <>
-            <div className="flex justify-between text-brand-600">
+            <div className="flex justify-between font-medium">
               <span>Advance ({splitPercent ?? 50}%)</span>
               <span>₹{advanceAmount.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between text-slate-500">
+            <div className="flex justify-between text-neutral-500">
               <span>COD on Delivery</span>
               <span>₹{codAmount.toFixed(2)}</span>
             </div>
@@ -74,7 +74,7 @@ export default function OrderSummary({
         )}
 
         {paymentType === 'full' && (
-          <div className="flex justify-between text-brand-600">
+          <div className="flex justify-between font-medium">
             <span>Pay Now (Full)</span>
             <span>₹{grandTotal.toFixed(2)}</span>
           </div>

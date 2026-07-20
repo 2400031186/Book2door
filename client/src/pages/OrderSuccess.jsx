@@ -57,7 +57,7 @@ export default function OrderSuccess() {
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="text-center mb-8">
           <div className="w-16 h-16 rounded-full gradient-bg flex items-center justify-center mx-auto mb-4">
-            <CheckCircle size={32} className="text-white" />
+            <CheckCircle size={32} className="text-inherit" />
           </div>
           <h1 className="text-3xl font-bold mb-2">Order Placed Successfully!</h1>
           <p className="text-slate-500">Thank you for your order. We&apos;ll process it shortly.</p>
@@ -79,7 +79,7 @@ export default function OrderSuccess() {
             </div>
             <div>
               <p className="text-slate-500">Grand Total</p>
-              <p className="font-bold text-brand-600">₹{order.grand_total}</p>
+              <p className="font-bold">₹{order.grand_total}</p>
             </div>
             {order.payment_type === 'split' && (
               <>
@@ -111,8 +111,8 @@ export default function OrderSuccess() {
             </div>
           )}
 
-          <div className="flex items-center gap-3 p-4 rounded-xl bg-brand-50 dark:bg-brand-900/20">
-            <Clock size={20} className="text-brand-600" />
+          <div className="flex items-center gap-3 p-4 rounded-xl bg-neutral-100 dark:bg-neutral-900">
+            <Clock size={20} className="text-neutral-600 dark:text-neutral-300" />
             <div>
               <p className="font-medium">Estimated Delivery</p>
               <p className="text-sm text-slate-500">3–5 business days after payment confirmation</p>
