@@ -1,4 +1,5 @@
 import { supabase } from '../config/supabase.js';
+import { withDefaultCover, withDefaultCovers } from '../utils/books.js';
 
 export async function getBooks(req, res) {
   try {
@@ -16,7 +17,7 @@ export async function getBooks(req, res) {
     const { data, error } = await query;
     if (error) throw error;
 
-    res.json(data);
+    res.json(withDefaultCovers(data));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -31,7 +32,7 @@ export async function getBookById(req, res) {
       .single();
 
     if (error) throw error;
-    res.json(data);
+    res.json(withDefaultCover(data));
   } catch (err) {
     res.status(404).json({ error: 'Book not found' });
   }

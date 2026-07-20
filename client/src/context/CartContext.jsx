@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useReducer } from 'react';
+import { getBookCoverUrl } from '../constants/books';
 
 const CartContext = createContext();
 const STORAGE_KEY = 'book2door-cart';
@@ -88,7 +89,7 @@ export function CartProvider({ children }) {
         course_code: book.course_code,
         title: book.title,
         price: parseFloat(book.price),
-        cover_image_url: book.cover_image_url,
+        cover_image_url: getBookCoverUrl(book.cover_image_url),
         year: book.year,
         semester: book.semester,
         quantity,

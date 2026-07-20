@@ -2,6 +2,7 @@ import { supabase } from '../config/supabase.js';
 import { getPdfPageCountFromBuffer } from '../utils/pdf.js';
 import { calculatePdfPrice, getPricingSettings } from '../utils/pricing.js';
 import { getUploadBuffer } from '../utils/uploadFile.js';
+import { assertStorageQuota } from '../utils/storageManager.js';
 
 export async function uploadPdf(req, res) {
   try {
@@ -20,6 +21,7 @@ export async function uploadPdf(req, res) {
     };
 
     const fileBuffer = await getUploadBuffer(req.file);
+    await assertStorageQuota(fileBuffer.length);
     const pageCount = await getPdfPageCountFromBuffer(fileBuffer);
     const settings = await getPricingSettings();
     const calculatedPrice = calculatePdfPrice(pageCount, printOptions, settings);
@@ -57,6 +59,9 @@ export async function uploadPdf(req, res) {
     });
   } catch (err) {
     const message = err.message || 'Upload failed';
+    if (err.statusCode === 413) {
+      return res.status(413).json({ error: message });
+    }
     if (
       message.includes('File too large') ||
       message.includes('LIMIT_FILE_SIZE')

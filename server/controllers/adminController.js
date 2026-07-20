@@ -1,6 +1,13 @@
 import { supabase } from '../config/supabase.js';
 import { getPricingSettings, invalidateSettingsCache } from '../utils/pricing.js';
 import { getUploadBuffer } from '../utils/uploadFile.js';
+import {
+  assertStorageQuota,
+  deleteStorageObject,
+  getSignedPreviewUrl,
+  getStorageSummary,
+} from '../utils/storageManager.js';
+import { DEFAULT_BOOK_COVER, withDefaultCovers } from '../utils/books.js';
 
 export async function getDashboard(req, res) {
   try {
@@ -209,6 +216,7 @@ export async function createBook(req, res) {
       pdf_file_name = req.file.originalname;
       pdf_path = `books/${Date.now()}-${req.file.originalname}`;
       const buffer = await getUploadBuffer(req.file);
+      await assertStorageQuota(buffer.length);
       const { error: uploadError } = await supabase.storage
         .from('pdf_uploads')
         .upload(pdf_path, buffer, { contentType: 'application/pdf' });
@@ -225,6 +233,7 @@ export async function createBook(req, res) {
         price: parseFloat(price),
         pdf_path,
         pdf_file_name,
+        cover_image_url: DEFAULT_BOOK_COVER,
         is_active: is_active !== 'false' && is_active !== false,
       })
       .select()
@@ -238,7 +247,7 @@ export async function createBook(req, res) {
     }
     res.status(201).json(data);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(err.statusCode || 500).json({ error: err.message });
   }
 }
 
@@ -259,6 +268,7 @@ export async function updateBook(req, res) {
     if (req.file) {
       const pdf_path = `books/${Date.now()}-${req.file.originalname}`;
       const buffer = await getUploadBuffer(req.file);
+      await assertStorageQuota(buffer.length);
       await supabase.storage.from('pdf_uploads').upload(pdf_path, buffer, { contentType: 'application/pdf' });
       updates.pdf_path = pdf_path;
       updates.pdf_file_name = req.file.originalname;
@@ -281,7 +291,7 @@ export async function updateBook(req, res) {
     }
     res.json(data);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(err.statusCode || 500).json({ error: err.message });
   }
 }
 
@@ -401,6 +411,7 @@ export async function updateAdminSettings(req, res) {
     if (req.file) {
       const filePath = `qr/${Date.now()}-${req.file.originalname}`;
       const buffer = await getUploadBuffer(req.file);
+      await assertStorageQuota(buffer.length);
       await supabase.storage.from('payment_qr').upload(filePath, buffer, { contentType: req.file.mimetype, upsert: true });
       const { data: urlData } = supabase.storage.from('payment_qr').getPublicUrl(filePath);
       current.upi_qr_url = urlData?.publicUrl || filePath;
@@ -417,7 +428,7 @@ export async function updateAdminSettings(req, res) {
     invalidateSettingsCache();
     res.json(current);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(err.statusCode || 500).json({ error: err.message });
   }
 }
 
@@ -652,7 +663,7 @@ export async function getAllBooksAdmin(req, res) {
   try {
     const { data, error } = await supabase.from('books').select('*').order('created_at', { ascending: false });
     if (error) throw error;
-    res.json(data);
+    res.json(withDefaultCovers(data));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -663,5 +674,66 @@ export async function checkAdminRole(req, res) {
     res.json({ isAdmin: true, userId: req.user.id });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+}
+
+export async function getStore(req, res) {
+  try {
+    const { type, orphan } = req.query;
+    const summary = await getStorageSummary();
+    let files = summary.files;
+
+    if (type === 'pdf') {
+      files = files.filter((f) => f.fileType === 'pdf');
+    } else if (type === 'image') {
+      files = files.filter((f) => f.fileType === 'image');
+    }
+
+    if (orphan === 'true') {
+      files = files.filter((f) => f.isOrphan);
+    }
+
+    res.json({
+      limitBytes: summary.limitBytes,
+      usedBytes: summary.usedBytes,
+      usedFormatted: summary.usedFormatted,
+      limitFormatted: summary.limitFormatted,
+      percentUsed: summary.percentUsed,
+      fileCount: summary.fileCount,
+      pdfCount: summary.pdfCount,
+      imageCount: summary.imageCount,
+      orphanCount: summary.orphanCount,
+      files,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+export async function deleteStoreFile(req, res) {
+  try {
+    const { bucket, path } = req.body;
+    if (!bucket || !path) {
+      return res.status(400).json({ error: 'bucket and path are required' });
+    }
+
+    await deleteStorageObject(bucket, path);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(err.statusCode || 500).json({ error: err.message });
+  }
+}
+
+export async function getStoreFilePreview(req, res) {
+  try {
+    const { bucket, path } = req.query;
+    if (!bucket || !path) {
+      return res.status(400).json({ error: 'bucket and path are required' });
+    }
+
+    const url = await getSignedPreviewUrl(bucket, path);
+    res.json({ url });
+  } catch (err) {
+    res.status(404).json({ error: err.message || 'File not found' });
   }
 }

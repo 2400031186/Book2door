@@ -5,6 +5,7 @@ import { Helmet } from 'react-helmet-async';
 import { Search, ShoppingCart, BookOpen } from 'lucide-react';
 import { booksApi } from '../services/api';
 import { useCart } from '../context/CartContext';
+import { getBookCoverUrl } from '../constants/books';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import { Select } from '../components/Input';
@@ -104,12 +105,12 @@ export default function Books() {
                 transition={{ delay: Math.min(i * 0.04, 0.3) }}
               >
                 <Card hover className="flex flex-col h-full p-4 sm:p-6">
-                  <div className="aspect-[3/4] rounded-xl bg-neutral-100 dark:bg-neutral-900 mb-4 flex items-center justify-center overflow-hidden border border-neutral-200 dark:border-neutral-800">
-                    {book.cover_image_url ? (
-                      <img src={book.cover_image_url} alt={book.title} className="w-full h-full object-cover" />
-                    ) : (
-                      <BookOpen size={48} className="text-neutral-400 opacity-50" />
-                    )}
+                  <div className="aspect-[3/4] rounded-xl bg-white dark:bg-neutral-900 mb-4 flex items-center justify-center overflow-hidden border border-neutral-200 dark:border-neutral-800 p-3">
+                    <img
+                      src={getBookCoverUrl(book.cover_image_url)}
+                      alt={book.title}
+                      className="w-full h-full object-contain"
+                    />
                   </div>
                   <h3 className="font-semibold line-clamp-2 mb-1">{book.title}</h3>
                   <p className="text-xs text-neutral-500 mb-2">

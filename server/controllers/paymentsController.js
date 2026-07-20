@@ -1,5 +1,6 @@
 import { supabase } from '../config/supabase.js';
 import { getUploadBuffer } from '../utils/uploadFile.js';
+import { assertStorageQuota } from '../utils/storageManager.js';
 
 export async function submitPayment(req, res) {
   try {
@@ -33,6 +34,7 @@ export async function submitPayment(req, res) {
 
     const filePath = `${order.order_number}-${Date.now()}${req.file.originalname.slice(req.file.originalname.lastIndexOf('.'))}`;
     const fileBuffer = await getUploadBuffer(req.file);
+    await assertStorageQuota(fileBuffer.length);
 
     const { error: uploadError } = await supabase.storage
       .from('payment_screenshots')
@@ -66,6 +68,9 @@ export async function submitPayment(req, res) {
 
     res.status(201).json({ payment, order_status: 'payment_review' });
   } catch (err) {
+    if (err.statusCode === 413) {
+      return res.status(413).json({ error: err.message });
+    }
     res.status(500).json({ error: err.message });
   }
 }

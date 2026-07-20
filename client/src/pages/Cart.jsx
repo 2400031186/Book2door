@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { Trash2, Plus, Minus, ShoppingBag, FileText, BookOpen } from 'lucide-react';
+import { Trash2, Plus, Minus, ShoppingBag, FileText } from 'lucide-react';
 import { useCart, getLineTotal } from '../context/CartContext';
+import { getBookCoverUrl } from '../constants/books';
 import usePricing from '../hooks/usePricing';
 import Button from '../components/Button';
 import Card from '../components/Card';
@@ -55,9 +56,13 @@ export default function Cart() {
           <div className="lg:col-span-2 space-y-3 sm:space-y-4">
             {items.map((item) => (
               <Card key={item.cartKey} className="flex gap-3 sm:gap-4 p-4 sm:p-6">
-                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 flex items-center justify-center shrink-0">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 flex items-center justify-center shrink-0 overflow-hidden p-1">
                   {item.type === 'book' ? (
-                    <BookOpen size={24} className="text-neutral-600 dark:text-neutral-300" />
+                    <img
+                      src={getBookCoverUrl(item.cover_image_url)}
+                      alt={item.title}
+                      className="w-full h-full object-contain"
+                    />
                   ) : (
                     <FileText size={24} className="text-neutral-600 dark:text-neutral-300" />
                   )}

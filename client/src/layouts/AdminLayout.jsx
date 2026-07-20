@@ -1,6 +1,6 @@
 import { Link, NavLink, Outlet, Navigate } from 'react-router-dom';
 import {
-  LayoutDashboard, BookOpen, ShoppingBag, CreditCard, Settings, ArrowLeft, ClipboardList,
+  LayoutDashboard, BookOpen, ShoppingBag, CreditCard, Settings, ArrowLeft, ClipboardList, HardDrive,
 } from 'lucide-react';
 import { UserButton } from '@clerk/clerk-react';
 import { useAuth } from '../context/AuthContext';
@@ -10,6 +10,7 @@ const adminNav = [
   { to: '/admin/order-book', label: 'Order Book', icon: ClipboardList },
   { to: '/admin/orders', label: 'Orders', icon: ShoppingBag },
   { to: '/admin/books', label: 'Books', icon: BookOpen },
+  { to: '/admin/store', label: 'Store', icon: HardDrive },
   { to: '/admin/payments', label: 'Payments', icon: CreditCard },
   { to: '/admin/settings', label: 'Settings', icon: Settings },
 ];

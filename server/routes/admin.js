@@ -19,6 +19,9 @@ import {
   getOrderBook,
   updateOrderBookItemPrint,
   checkAdminRole,
+  getStore,
+  deleteStoreFile,
+  getStoreFilePreview,
 } from '../controllers/adminController.js';
 
 const router = Router();
@@ -61,5 +64,9 @@ router.put('/settings', (req, res, next) => {
 
 router.get('/pdf/:id/download', downloadPdf);
 router.get('/books/:id/pdf', downloadBookPdf);
+
+router.get('/store', getStore);
+router.get('/store/preview', getStoreFilePreview);
+router.delete('/store', deleteStoreFile);
 
 export default router;

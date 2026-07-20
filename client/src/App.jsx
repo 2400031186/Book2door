@@ -24,6 +24,8 @@ const AdminBooks = lazy(() => import('./pages/admin/AdminBooks'));
 const AdminPayments = lazy(() => import('./pages/admin/AdminPayments'));
 const AdminOrderBook = lazy(() => import('./pages/admin/AdminOrderBook'));
 const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'));
+const AdminStore = lazy(() => import('./pages/admin/AdminStore'));
+const AdminStoreViewer = lazy(() => import('./pages/admin/AdminStoreViewer'));
 
 function PageLoader() {
   return (
@@ -61,6 +63,8 @@ export default function App() {
                       <Route path="order-book" element={<AdminOrderBook />} />
                       <Route path="orders" element={<AdminOrders />} />
                       <Route path="books" element={<AdminBooks />} />
+                      <Route path="store" element={<AdminStore />} />
+                      <Route path="store/view" element={<AdminStoreViewer />} />
                       <Route path="payments" element={<AdminPayments />} />
                       <Route path="settings" element={<AdminSettings />} />
                     </Route>

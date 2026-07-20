@@ -91,4 +91,7 @@ export const adminApi = {
   updateSettings: (formData) => api.put('/admin/settings', formData),
   downloadPdf: (id) => api.get(`/admin/pdf/${id}/download`),
   downloadBookPdf: (id) => api.get(`/admin/books/${id}/pdf`),
+  store: () => api.get('/admin/store'),
+  storePreview: (bucket, path) => api.get('/admin/store/preview', { params: { bucket, path } }),
+  deleteStoreFile: (bucket, path) => api.delete('/admin/store', { data: { bucket, path } }),
 };
