@@ -271,6 +271,35 @@ export async function deleteStorageObject(bucket, path) {
   return { success: true };
 }
 
+/** Empty all app storage buckets via the Storage API (SQL DELETE is blocked by Supabase). */
+export async function emptyAllStorageBuckets() {
+  const files = await listAllFiles();
+  const pathsByBucket = new Map(BUCKETS.map((b) => [b, []]));
+
+  for (const file of files) {
+    if (pathsByBucket.has(file.bucket)) {
+      pathsByBucket.get(file.bucket).push(file.path);
+    }
+  }
+
+  const results = [];
+  for (const bucket of BUCKETS) {
+    const paths = pathsByBucket.get(bucket) || [];
+    let deleted = 0;
+
+    for (let i = 0; i < paths.length; i += 100) {
+      const batch = paths.slice(i, i + 100);
+      const { error } = await supabase.storage.from(bucket).remove(batch);
+      if (error) throw error;
+      deleted += batch.length;
+    }
+
+    results.push({ bucket, deleted });
+  }
+
+  return results;
+}
+
 export async function getSignedPreviewUrl(bucket, path) {
   const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, 3600);
   if (error) throw error;

@@ -75,16 +75,17 @@ export function calculatePdfPrice(pageCount, options, settings) {
   return Math.round((printCost + bindingCharge) * 100) / 100;
 }
 
-/** Admin book amount is the single-side price; double-side is half. */
-export function calculateBookUnitPrice(singleSideAmount, sideMode, settings) {
-  const base = parseFloat(singleSideAmount) || 0;
+/** Use admin-set single / double prices on the book. Falls back to half of single if double missing. */
+export function calculateBookUnitPrice(book, sideMode) {
+  const single = parseFloat(book?.price) || 0;
   if (sideMode === 'double') {
-    const singleRate = settings.pdf_bw_single_per_page ?? settings.pdf_bw_per_page ?? 1;
-    const doubleRate = settings.pdf_bw_double_per_page ?? 0.5;
-    const ratio = singleRate > 0 ? doubleRate / singleRate : 0.5;
-    return Math.round(base * ratio * 100) / 100;
+    const double =
+      book?.price_double != null && book.price_double !== ''
+        ? parseFloat(book.price_double)
+        : Math.round(single * 0.5 * 100) / 100;
+    return Math.round((Number.isFinite(double) ? double : 0) * 100) / 100;
   }
-  return Math.round(base * 100) / 100;
+  return Math.round(single * 100) / 100;
 }
 
 export function calculateBookLineTotal(unitPrice, quantity) {

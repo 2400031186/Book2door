@@ -3,7 +3,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 import { Search, ShoppingCart, BookOpen } from 'lucide-react';
-import { booksApi, settingsApi } from '../services/api';
+import { booksApi } from '../services/api';
 import { useCart } from '../context/CartContext';
 import { getBookCoverUrl } from '../constants/books';
 import { getBookCartUnitPrice } from '../utils/bookPricing';
@@ -23,14 +23,12 @@ export default function Books() {
   const [search, setSearch] = useState('');
   const [year, setYear] = useState('');
   const [semester, setSemester] = useState('');
-  const [pricing, setPricing] = useState(null);
   const { addBook, itemCount } = useCart();
   const [addedId, setAddedId] = useState(null);
   const [sideModalBook, setSideModalBook] = useState(null);
 
   useEffect(() => {
     fetchBooks();
-    settingsApi.getPricing().then(({ data }) => setPricing(data.pricing)).catch(() => {});
   }, [year, semester]);
 
   const fetchBooks = async () => {
@@ -58,12 +56,9 @@ export default function Books() {
     );
   }, [books, search]);
 
-  const singleRate = pricing?.pdf_bw_single_per_page ?? pricing?.pdf_bw_per_page ?? 1;
-  const doubleRate = pricing?.pdf_bw_double_per_page ?? 0.5;
-
   const handleAddWithSide = (sideMode) => {
     if (!sideModalBook) return;
-    const unitPrice = getBookCartUnitPrice(sideModalBook.price, sideMode, pricing);
+    const unitPrice = getBookCartUnitPrice(sideModalBook, sideMode);
     addBook(sideModalBook, 1, sideMode, unitPrice);
     setAddedId(`${sideModalBook.id}-${sideMode}`);
     setSideModalBook(null);
@@ -142,8 +137,10 @@ export default function Books() {
                     Y{book.year} · Sem {book.semester}
                     {book.page_count ? ` · ${book.page_count} pg` : ''}
                   </p>
-                  <p className="text-sm sm:text-base font-bold mb-1">From ₹{getBookCartUnitPrice(book.price, 'double', pricing).toFixed(2)}</p>
-                  <p className="text-[10px] text-neutral-400 mb-1">Single-side: ₹{Number(book.price).toFixed(2)}</p>
+                  <p className="text-sm sm:text-base font-bold mb-1">From ₹{getBookCartUnitPrice(book, 'double').toFixed(2)}</p>
+                  <p className="text-[10px] text-neutral-400 mb-1">
+                    Single ₹{Number(book.price).toFixed(2)} · Double ₹{getBookCartUnitPrice(book, 'double').toFixed(2)}
+                  </p>
                   <p className="text-[10px] sm:text-xs mb-2 mt-auto leading-tight">
                     <span className="text-neutral-500">Code </span>
                     <span className="font-mono font-bold text-neutral-600 dark:text-neutral-300">{book.course_code}</span>
@@ -188,7 +185,7 @@ export default function Books() {
               className="w-full p-4 rounded-xl border-2 border-neutral-200 dark:border-neutral-700 hover:border-[#0A0A0A] dark:hover:border-white text-left transition"
             >
               <div className="font-semibold">Single-sided</div>
-              <div className="text-sm text-neutral-500">₹{singleRate}/page rate · ₹{getBookCartUnitPrice(sideModalBook.price, 'single', pricing).toFixed(2)} total</div>
+              <div className="text-sm text-neutral-500">₹{getBookCartUnitPrice(sideModalBook, 'single').toFixed(2)}</div>
             </button>
             <button
               type="button"
@@ -196,7 +193,7 @@ export default function Books() {
               className="w-full p-4 rounded-xl border-2 border-neutral-200 dark:border-neutral-700 hover:border-[#0A0A0A] dark:hover:border-white text-left transition"
             >
               <div className="font-semibold">Double-sided</div>
-              <div className="text-sm text-neutral-500">₹{doubleRate}/page rate · ₹{getBookCartUnitPrice(sideModalBook.price, 'double', pricing).toFixed(2)} total</div>
+              <div className="text-sm text-neutral-500">₹{getBookCartUnitPrice(sideModalBook, 'double').toFixed(2)}</div>
             </button>
           </div>
         )}

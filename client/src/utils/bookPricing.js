@@ -1,12 +1,12 @@
-export function getBookCartUnitPrice(singleSideAmount, sideMode, pricing) {
-  const base = Number(singleSideAmount) || 0;
+export function getBookCartUnitPrice(book, sideMode) {
+  const single = Number(book?.price) || 0;
   if (sideMode === 'double') {
-    const singleRate = pricing?.pdf_bw_single_per_page ?? pricing?.pdf_bw_per_page ?? 1;
-    const doubleRate = pricing?.pdf_bw_double_per_page ?? 0.5;
-    const ratio = singleRate > 0 ? doubleRate / singleRate : 0.5;
-    return Math.round(base * ratio * 100) / 100;
+    if (book?.price_double != null && book.price_double !== '') {
+      return Math.round((Number(book.price_double) || 0) * 100) / 100;
+    }
+    return Math.round(single * 0.5 * 100) / 100;
   }
-  return Math.round(base * 100) / 100;
+  return Math.round(single * 100) / 100;
 }
 
 export function formatSideLabel(sideMode) {

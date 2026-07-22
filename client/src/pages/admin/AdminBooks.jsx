@@ -16,6 +16,7 @@ const EMPTY_FORM = {
   year: '1',
   semester: '1',
   price: '',
+  price_double: '',
   is_active: true,
 };
 
@@ -66,6 +67,7 @@ export default function AdminBooks() {
       year: book.year,
       semester: book.semester,
       price: book.price,
+      price_double: book.price_double ?? '',
       is_active: book.is_active,
     });
     setPdfFile(null);
@@ -96,8 +98,12 @@ export default function AdminBooks() {
       setError('Title is required');
       return;
     }
-    if (!form.price) {
-      setError('Amount is required');
+    if (form.price === '' || form.price == null) {
+      setError('Single-side amount is required');
+      return;
+    }
+    if (form.price_double === '' || form.price_double == null) {
+      setError('Double-side amount is required');
       return;
     }
     if (!editing && !pdfFile) {
@@ -155,7 +161,7 @@ export default function AdminBooks() {
         <div>
           <h1 className="text-2xl font-bold">Books</h1>
           <p className="text-sm text-slate-500 mt-1">
-            Upload a book PDF and set the single-side amount. Double-sided price is half at checkout.
+            Upload a book PDF and set both single-side and double-side amounts.
           </p>
         </div>
         <Button onClick={openCreate}>
@@ -179,7 +185,8 @@ export default function AdminBooks() {
                   <th className="text-left py-3 px-4 font-semibold text-slate-600 dark:text-slate-300">Course</th>
                   <th className="text-left py-3 px-4 font-semibold text-slate-600 dark:text-slate-300">Title</th>
                   <th className="text-left py-3 px-4 font-semibold text-slate-600 dark:text-slate-300">Year / Sem</th>
-                  <th className="text-left py-3 px-4 font-semibold text-slate-600 dark:text-slate-300">Amount</th>
+                  <th className="text-left py-3 px-4 font-semibold text-slate-600 dark:text-slate-300">Single</th>
+                  <th className="text-left py-3 px-4 font-semibold text-slate-600 dark:text-slate-300">Double</th>
                   <th className="text-left py-3 px-4 font-semibold text-slate-600 dark:text-slate-300">PDF</th>
                   <th className="text-left py-3 px-4 font-semibold text-slate-600 dark:text-slate-300">Status</th>
                   <th className="text-right py-3 px-4 font-semibold text-slate-600 dark:text-slate-300">Actions</th>
@@ -191,7 +198,8 @@ export default function AdminBooks() {
                     <td className="py-3 px-4 font-mono font-semibold text-brand-600">{b.course_code}</td>
                     <td className="py-3 px-4 max-w-[200px] truncate">{b.title}</td>
                     <td className="py-3 px-4 text-slate-600 dark:text-slate-400">Y{b.year} · S{b.semester}</td>
-                    <td className="py-3 px-4 font-medium">₹{b.price} <span className="text-xs text-slate-400">(single)</span></td>
+                    <td className="py-3 px-4 font-medium">₹{b.price}</td>
+                    <td className="py-3 px-4 font-medium">₹{b.price_double ?? '—'}</td>
                     <td className="py-3 px-4">
                       {b.pdf_path ? (
                         <button
@@ -235,8 +243,11 @@ export default function AdminBooks() {
               value={form.course_code}
               onChange={(e) => setForm({ ...form, course_code: e.target.value.toUpperCase() })}
             />
+            <Input label="Title *" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
-              label="Amount (₹) — single-side *"
+              label="Single-side amount (₹) *"
               type="number"
               min="0"
               step="0.01"
@@ -244,8 +255,16 @@ export default function AdminBooks() {
               value={form.price}
               onChange={(e) => setForm({ ...form, price: e.target.value })}
             />
+            <Input
+              label="Double-side amount (₹) *"
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="e.g. 100"
+              value={form.price_double}
+              onChange={(e) => setForm({ ...form, price_double: e.target.value })}
+            />
           </div>
-          <Input label="Title *" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
           <div className="grid grid-cols-2 gap-4">
             <Select label="Year" value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value })}>
               {YEARS.map((y) => <option key={y} value={y}>Year {y}</option>)}

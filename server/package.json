@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "clear-storage": "node scripts/clear-production-storage.js"
   },
   "keywords": [],
   "author": "",

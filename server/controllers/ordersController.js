@@ -66,7 +66,7 @@ export async function createOrder(req, res) {
         if (error || !book) throw new Error(`Book not found: ${item.id}`);
 
         const sideMode = item.sideMode === 'double' ? 'double' : 'single';
-        const unitPrice = calculateBookUnitPrice(book.price, sideMode, settings);
+        const unitPrice = calculateBookUnitPrice(book, sideMode);
         const lineTotal = calculateBookLineTotal(unitPrice, item.quantity);
         orderItems.push({
           item_type: 'book',
@@ -82,6 +82,7 @@ export async function createOrder(req, res) {
             semester: book.semester,
             sideMode,
             single_side_amount: parseFloat(book.price),
+            double_side_amount: parseFloat(book.price_double),
           },
         });
       } else if (item.type === 'pdf') {

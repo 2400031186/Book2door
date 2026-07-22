@@ -6,7 +6,8 @@
   "scripts": {
     "build": "npm run build --prefix client",
     "dev:client": "npm run dev --prefix client",
-    "dev:server": "npm run dev --prefix server"
+    "dev:server": "npm run dev --prefix server",
+    "clear-storage": "npm run clear-storage --prefix server"
   },
   "dependencies": {
     "@clerk/backend": "^3.11.7",

@@ -195,7 +195,7 @@ export async function deleteOrder(req, res) {
 
 export async function createBook(req, res) {
   try {
-    const { course_code, title, year, semester, price, is_active } = req.body;
+    const { course_code, title, year, semester, price, price_double, is_active } = req.body;
 
     if (!course_code?.trim()) {
       return res.status(400).json({ error: 'Course code is required' });
@@ -205,6 +205,12 @@ export async function createBook(req, res) {
     }
     if (!['1', '2'].includes(String(semester))) {
       return res.status(400).json({ error: 'Semester must be 1 or 2' });
+    }
+    if (price === undefined || price === '' || Number.isNaN(parseFloat(price))) {
+      return res.status(400).json({ error: 'Single-side amount is required' });
+    }
+    if (price_double === undefined || price_double === '' || Number.isNaN(parseFloat(price_double))) {
+      return res.status(400).json({ error: 'Double-side amount is required' });
     }
     if (!req.file) {
       return res.status(400).json({ error: 'Book PDF is required' });
@@ -234,6 +240,7 @@ export async function createBook(req, res) {
         year: String(year),
         semester: String(semester),
         price: parseFloat(price),
+        price_double: parseFloat(price_double),
         page_count,
         pdf_path,
         pdf_file_name,
@@ -258,7 +265,12 @@ export async function createBook(req, res) {
 export async function updateBook(req, res) {
   try {
     const updates = { ...req.body };
-    if (updates.price) updates.price = parseFloat(updates.price);
+    if (updates.price !== undefined && updates.price !== '') {
+      updates.price = parseFloat(updates.price);
+    }
+    if (updates.price_double !== undefined && updates.price_double !== '') {
+      updates.price_double = parseFloat(updates.price_double);
+    }
     if (updates.course_code) updates.course_code = updates.course_code.trim().toUpperCase();
     if (updates.year && !['1', '2', '3', '4'].includes(String(updates.year))) {
       return res.status(400).json({ error: 'Year must be 1, 2, 3, or 4' });

@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useReducer } from 'react';
 import { getBookCoverUrl } from '../constants/books';
+import { getBookCartUnitPrice } from '../utils/bookPricing';
 
 const CartContext = createContext();
 const STORAGE_KEY = 'book2door-cart';
@@ -86,7 +87,7 @@ export function CartProvider({ children }) {
   }, [items]);
 
   const addBook = (book, quantity = 1, sideMode = 'single', unitPrice) => {
-    const price = unitPrice ?? parseFloat(book.price);
+    const price = unitPrice ?? getBookCartUnitPrice(book, sideMode);
     dispatch({
       type: 'ADD_BOOK',
       payload: {
@@ -95,6 +96,7 @@ export function CartProvider({ children }) {
         title: book.title,
         price,
         single_side_amount: parseFloat(book.price),
+        double_side_amount: book.price_double != null ? parseFloat(book.price_double) : null,
         sideMode,
         cover_image_url: getBookCoverUrl(book.cover_image_url),
         year: book.year,
